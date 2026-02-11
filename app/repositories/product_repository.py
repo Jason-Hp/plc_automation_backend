@@ -14,11 +14,13 @@ class ProductRepository:
         self._products = [
             Product(
                 id="sample-1",
+                name="SIMATIC S7-1500 CPU",
                 part_number="CPU-1510",
-                brand="Siemens",
+                manufacturer="Siemens",
                 stock=True,
                 description="Sample PLC CPU for wiring cabinets.",
                 url="cpu-1510",
+                available_for_countries={"SG"},
             )
         ]
 

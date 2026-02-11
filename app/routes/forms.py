@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, File, HTTPException, UploadFile
 
 from app.config import settings
 from app.repositories.newsletter_repository import NewsletterRepository
@@ -10,7 +10,6 @@ from app.schemas import (
     JobApplicationRequest,
     NewsletterRequest,
     QuoteRequest,
-    JobApplicationRequest
 )
 from app.services.email_service import EmailService
 from app.services.storage_service import StorageService
@@ -102,6 +101,5 @@ async def submit_job_application(
     )
 
     return ApiResponse(message=translate_text("Application submitted successfully."))
-
 
 

@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, Field
 
 class ApiResponse(BaseModel):
     message: str
@@ -11,7 +11,7 @@ class EnquiryRequest(BaseModel):
     company_name: str = Field(..., min_length=1)
     country_code: str = Field(..., min_length=1)
     phone: str = Field(..., min_length=5)
-    email: EmailStr
+    email: str = Field(..., min_length=3)
     message: str = Field("", max_length=2000)
 
 class ProductPreview(BaseModel):
@@ -46,13 +46,13 @@ class QuoteRequest(EnquiryRequest):
 
 
 class NewsletterRequest(BaseModel):
-    email: EmailStr
+    email: str = Field(..., min_length=3)
 
 
 class JobApplicationRequest(BaseModel):
     first_name: str = Field(..., min_length=1)
     last_name: str = Field(..., min_length=1)
-    email: EmailStr
+    email: str = Field(..., min_length=3)
     country_code: str = Field(..., min_length=1)
     phone: str = Field(..., min_length=5)
     experience: str = Field(..., min_length=1)
@@ -82,7 +82,7 @@ class FAQResponse(FAQRequest):
 class ContactInfoRequest(BaseModel):
     address: str
     phone: str
-    email: EmailStr
+    email: str = Field(..., min_length=3)
     working_hours: str
     country: str
 

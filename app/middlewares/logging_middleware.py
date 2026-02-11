@@ -26,7 +26,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):
         if request_body:
             try:
                 log_entry["body"] = json.loads(request_body.decode())
-            except:
+            except Exception:
                 log_entry["body"] = request_body.decode()[:100]  # First 100 chars
         
         LogService.WEB.log(json.dumps(log_entry))
@@ -61,7 +61,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):
                 "stack_trace": traceback.format_exc(),
             }
             LogService.ERROR.log(json.dumps(error_entry), level="ERROR")
-            LogService.WEB.log(json.dumps(error_entry, level="ERROR"))  
+            LogService.WEB.log(json.dumps(error_entry), level="ERROR")
             AlertService.ERROR.send_alert(json.dumps(error_entry))
 
             raise
