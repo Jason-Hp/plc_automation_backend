@@ -1,19 +1,23 @@
-
 from app.schemas import FAQResponse
 
-# TODO: Implement the methods for FAQRepository
+
 class FaqRepository:
     def __init__(self):
-        pass
+        self._faqs: list[FAQResponse] = []
+        self._next_id = 1
 
     def get_all_faqs(self) -> list[FAQResponse]:
-        pass
+        return self._faqs
 
     def add_faq(self, question: str, answer: str) -> None:
-        pass
+        self._faqs.append(FAQResponse(id=self._next_id, question=question, answer=answer))
+        self._next_id += 1
 
     def delete_faq(self, faq_id: int) -> None:
-        pass
+        self._faqs = [faq for faq in self._faqs if faq.id != faq_id]
 
     def update_faq(self, faq_id: int, question: str, answer: str) -> None:
-        pass
+        for idx, faq in enumerate(self._faqs):
+            if faq.id == faq_id:
+                self._faqs[idx] = FAQResponse(id=faq_id, question=question, answer=answer)
+                return
