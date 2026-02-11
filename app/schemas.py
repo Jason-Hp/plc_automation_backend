@@ -39,10 +39,12 @@ class ProductPreviewListResponse(BaseModel):
     per_page: int
     total: int
 
+class ProductPreviewWithQuantity(ProductPreview):
+    quantity: int
 
 # Extends EnquiryRequest
 class QuoteRequest(EnquiryRequest):
-    products: List[Product] = Field(..., min_items=1)
+    products: List[ProductPreviewWithQuantity] = Field(..., min_items=1)
 
 
 class NewsletterRequest(BaseModel):

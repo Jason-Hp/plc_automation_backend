@@ -116,13 +116,7 @@ Request JSON payload (logical schema):
       "id": "sample-1",
       "name": "SIMATIC S7-1500 CPU",
       "part_number": "CPU-1510",
-      "manufacturer": "Siemens",
-      "stock": true,
-      "description": "Sample PLC CPU",
-      "category": "PLC",
-      "sub_category": "CPU",
-      "url": "cpu-1510",
-      "available_for_countries": ["SG"]
+      "quantity": 1
     }
   ]
 }
