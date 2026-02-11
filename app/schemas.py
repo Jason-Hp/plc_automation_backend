@@ -2,8 +2,6 @@ from typing import List, Optional
 
 from pydantic import BaseModel, EmailStr, Field
 
-from app.enums.country import Country
-
 class ApiResponse(BaseModel):
     message: str
 
