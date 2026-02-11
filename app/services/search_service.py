@@ -1,4 +1,4 @@
-# This is a service that implements some form of semantic search using embeddings/vectorDB and perhaps also RAGs & LLMs
+# This is a service that implements some form of semantic search using embeddings/vectorDB
 from app.schemas import ProductPreview
 
 class SearchService:
