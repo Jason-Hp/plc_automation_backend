@@ -1,74 +1,34 @@
-# PLC Automation Backend
-
-FastAPI backend for PLC Automation public website APIs (forms, product catalog, blog/info content, and admin management APIs).
-
-## Tech stack
-- Python + FastAPI
-- Pydantic models for request/response schemas
-- In-memory placeholder repositories for multiple domains (to be replaced with DB-backed repositories)
-
-## Project status
-This project is still in progress.
-- `BlogRepository`, `FaqRepository`, and `ContactInfoRepository` are currently in-memory placeholders.
-- Admin login currently uses hardcoded credentials (`admin` / `password`) and a simple signed token implementation.
-- SMTP and persistence need environment configuration for production use.
-
----
-
-## Run locally
-
-### 1) Install dependencies
-```bash
-pip install -r requirements.txt
-```
-
-### 2) Configure environment
-Create `.env` from `.env.example` and set values (especially SMTP and emails).
-
-### 3) Start API
-```bash
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-```
+# PLC Automation Backend API Endpoints
 
 Base URL: `http://localhost:8000`
 
+All endpoints below are under `/api`.
+
+## Header rules (applies to every endpoint)
+
+- `lang`: optional, default `en`
+- `country`: optional, default `SG`
+- `Authorization`: required for all `/api/admin/*` endpoints **except** `/api/admin/login`
+
 ---
 
-## Authentication
+## Health Route
 
-Admin endpoints (prefix `/api/admin`) require bearer token except `/api/admin/login`.
-
-### Login request
-`POST /api/admin/login`
-
-Request JSON:
+### GET `/api/health`
+**Headers**
 ```json
 {
-  "username": "admin",
-  "password": "password"
+  "lang": "en (optional)",
+  "country": "SG (optional)"
 }
 ```
 
-Response JSON:
+**Request body**
 ```json
-"<token>"
+{}
 ```
 
-Use token:
-```http
-Authorization: Bearer <token>
-```
-
----
-
-## API documentation
-
-All routes are mounted under `/api`.
-
-## 1) Health
-
-### GET `/api/health`
-Response JSON:
+**Response 200**
 ```json
 {
   "status": "ok"
@@ -77,10 +37,18 @@ Response JSON:
 
 ---
 
-## 2) Forms APIs
+## Forms Routes
 
-## POST `/api/enquiry`
-Request JSON:
+### POST `/api/enquiry`
+**Headers**
+```json
+{
+  "lang": "en (optional)",
+  "country": "SG (optional)"
+}
+```
+
+**Request body (application/json)**
 ```json
 {
   "name": "John Doe",
@@ -92,17 +60,28 @@ Request JSON:
 }
 ```
 
-Response JSON:
+**Response 200**
 ```json
 {
   "message": "Your query has been submitted successfully."
 }
 ```
 
-## POST `/api/quote`
-> Supports optional file upload via `multipart/form-data`.
+### POST `/api/quote`
+**Headers**
+```json
+{
+  "lang": "en (optional)",
+  "country": "SG (optional)",
+  "Content-Type": "multipart/form-data"
+}
+```
 
-Request JSON payload (logical schema):
+**Request body (multipart/form-data)**
+- `payload` (json string)
+- `attachment` (file, optional)
+
+`payload` JSON schema:
 ```json
 {
   "name": "John Doe",
@@ -122,37 +101,51 @@ Request JSON payload (logical schema):
 }
 ```
 
-Multipart fields:
-- `payload`: JSON object above
-- `attachment`: file (optional)
-
-Response JSON:
+**Response 200**
 ```json
 {
   "message": "Your enquiry has been submitted successfully."
 }
 ```
 
-## POST `/api/newsletter`
-Request JSON:
+### POST `/api/newsletter`
+**Headers**
+```json
+{
+  "lang": "en (optional)",
+  "country": "SG (optional)"
+}
+```
+
+**Request body (application/json)**
 ```json
 {
   "email": "subscriber@example.com"
 }
 ```
 
-Response JSON:
+**Response 200**
 ```json
 {
   "message": "Thank you for subscribing."
 }
 ```
 
-## POST `/api/job-application`
-> `multipart/form-data`
+### POST `/api/job-application`
+**Headers**
+```json
+{
+  "lang": "en (optional)",
+  "country": "SG (optional)",
+  "Content-Type": "multipart/form-data"
+}
+```
 
-Form fields:
-- `payload` (logical JSON schema):
+**Request body (multipart/form-data)**
+- `payload` (json string)
+- `resume` (file, required)
+
+`payload` JSON schema:
 ```json
 {
   "first_name": "Jane",
@@ -164,9 +157,8 @@ Form fields:
   "role": "PLC Engineer"
 }
 ```
-- `resume`: file (required)
 
-Response JSON:
+**Response 200**
 ```json
 {
   "message": "Application submitted successfully."
@@ -175,10 +167,23 @@ Response JSON:
 
 ---
 
-## 3) Product APIs
+## Product Routes
 
-## GET `/api/products?page=1&per_page=30&category=<optional>&search=<optional>`
-Response JSON:
+### GET `/api/products?page=1&per_page=30&category=<optional>&search=<optional>`
+**Headers**
+```json
+{
+  "lang": "en (optional)",
+  "country": "SG (optional)"
+}
+```
+
+**Request body**
+```json
+{}
+```
+
+**Response 200**
 ```json
 {
   "items": [
@@ -194,8 +199,21 @@ Response JSON:
 }
 ```
 
-## GET `/api/products/{product_id}`
-Response JSON:
+### GET `/api/products/{product_id}`
+**Headers**
+```json
+{
+  "lang": "en (optional)",
+  "country": "SG (optional)"
+}
+```
+
+**Request body**
+```json
+{}
+```
+
+**Response 200**
 ```json
 {
   "id": "sample-1",
@@ -211,7 +229,7 @@ Response JSON:
 }
 ```
 
-404 JSON:
+**Response 404**
 ```json
 {
   "detail": "Product not found"
@@ -220,10 +238,23 @@ Response JSON:
 
 ---
 
-## 4) Info APIs
+## Info Routes
 
-## GET `/api/faqs`
-Response JSON:
+### GET `/api/faqs`
+**Headers**
+```json
+{
+  "lang": "en (optional)",
+  "country": "SG (optional)"
+}
+```
+
+**Request body**
+```json
+{}
+```
+
+**Response 200**
 ```json
 [
   {
@@ -234,8 +265,21 @@ Response JSON:
 ]
 ```
 
-## GET `/api/contact-info`
-Response JSON:
+### GET `/api/contact-info`
+**Headers**
+```json
+{
+  "lang": "en (optional)",
+  "country": "SG (optional)"
+}
+```
+
+**Request body**
+```json
+{}
+```
+
+**Response 200**
 ```json
 [
   {
@@ -249,8 +293,21 @@ Response JSON:
 ]
 ```
 
-## GET `/api/contact-info/{country}`
-Response JSON:
+### GET `/api/contact-info/{country}`
+**Headers**
+```json
+{
+  "lang": "en (optional)",
+  "country": "SG (optional)"
+}
+```
+
+**Request body**
+```json
+{}
+```
+
+**Response 200**
 ```json
 {
   "id": 1,
@@ -262,7 +319,7 @@ Response JSON:
 }
 ```
 
-404 JSON:
+**Response 404**
 ```json
 {
   "detail": "Contact info not found"
@@ -271,21 +328,57 @@ Response JSON:
 
 ---
 
-## 5) Blog APIs
+## Blog Routes
 
-## GET `/api/blogs/?search=<optional>&category=<optional>&page=1&per_page=10`
-Response JSON:
+### GET `/api/blogs/?search=<optional>&category=<optional>&page=1&per_page=10`
+**Headers**
+```json
+{
+  "lang": "en (optional)",
+  "country": "SG (optional)"
+}
+```
+
+**Request body**
+```json
+{}
+```
+
+**Response 200**
 ```json
 {
   "page": 1,
   "per_page": 10,
-  "total": 0,
-  "blog_previews": []
+  "total": 1,
+  "blog_previews": [
+    {
+      "id": 1,
+      "title": "How to select a PLC",
+      "category": "Guide",
+      "image_url": "https://cdn.example.com/blogs/plc-guide.jpg",
+      "published_by": "PLC Automation",
+      "created_at": "01-01-2025",
+      "updated_at": "02-01-2025"
+    }
+  ]
 }
 ```
 
-## GET `/api/blogs/{blogId}`
-Response JSON:
+### GET `/api/blogs/{blogId}`
+**Headers**
+```json
+{
+  "lang": "en (optional)",
+  "country": "SG (optional)"
+}
+```
+
+**Request body**
+```json
+{}
+```
+
+**Response 200**
 ```json
 {
   "id": 1,
@@ -299,7 +392,7 @@ Response JSON:
 }
 ```
 
-404 JSON:
+**Response 404**
 ```json
 {
   "detail": "Blog not found"
@@ -308,12 +401,85 @@ Response JSON:
 
 ---
 
-## 6) Admin APIs (Bearer token required)
+## Search Routes
 
-## POST `/api/admin/products/batch`
-> `multipart/form-data` with field `csv_file`
+### GET `/api/semantic-search?query=<required>&top_k=10`
+**Headers**
+```json
+{
+  "lang": "en (optional)",
+  "country": "SG (optional)"
+}
+```
 
-Response JSON:
+**Request body**
+```json
+{}
+```
+
+**Response 200**
+```json
+[
+  {
+    "id": "sample-1",
+    "name": "SIMATIC S7-1500 CPU",
+    "part_number": "CPU-1510"
+  }
+]
+```
+
+---
+
+## Admin Routes
+
+> All admin endpoints below require:
+>
+> `Authorization: Bearer <token>`
+
+### POST `/api/admin/login`
+**Headers**
+```json
+{
+  "lang": "en (optional)",
+  "country": "SG (optional)"
+}
+```
+
+**Request body (application/json)**
+```json
+{
+  "username": "admin",
+  "password": "password"
+}
+```
+
+**Response 200**
+```json
+"<jwt_token>"
+```
+
+**Response 401**
+```json
+{
+  "detail": "Invalid credentials"
+}
+```
+
+### POST `/api/admin/products/batch`
+**Headers**
+```json
+{
+  "lang": "en (optional)",
+  "country": "SG (optional)",
+  "Authorization": "Bearer <token>",
+  "Content-Type": "multipart/form-data"
+}
+```
+
+**Request body (multipart/form-data)**
+- `csv_file` (file, required, `.csv`)
+
+**Response 200**
 ```json
 {
   "processed": 12,
@@ -321,8 +487,17 @@ Response JSON:
 }
 ```
 
-## POST `/api/admin/products`
-Request JSON:
+### POST `/api/admin/products`
+**Headers**
+```json
+{
+  "lang": "en (optional)",
+  "country": "SG (optional)",
+  "Authorization": "Bearer <token>"
+}
+```
+
+**Request body (application/json)**
 ```json
 {
   "id": "sample-2",
@@ -338,33 +513,84 @@ Request JSON:
 }
 ```
 
-Response JSON:
+**Response 200**
 ```json
 {
   "message": "Product uploaded successfully."
 }
 ```
 
-## PUT `/api/admin/products/{product_id}`
-Request JSON: same as create product.
+### PUT `/api/admin/products/{product_id}`
+**Headers**
+```json
+{
+  "lang": "en (optional)",
+  "country": "SG (optional)",
+  "Authorization": "Bearer <token>"
+}
+```
 
-Response JSON:
+**Request body (application/json)**
+```json
+{
+  "id": "sample-2",
+  "name": "Relay Module",
+  "part_number": "RM-100",
+  "manufacturer": "BrandX",
+  "stock": true,
+  "description": "Industrial relay",
+  "category": "Relay",
+  "sub_category": "Interface",
+  "url": "relay-module",
+  "available_for_countries": ["SG", "MY"]
+}
+```
+
+**Response 200**
 ```json
 {
   "message": "Product updated successfully."
 }
 ```
 
-## DELETE `/api/admin/products/{product_id}`
-Response JSON:
+### DELETE `/api/admin/products/{product_id}`
+**Headers**
+```json
+{
+  "lang": "en (optional)",
+  "country": "SG (optional)",
+  "Authorization": "Bearer <token>"
+}
+```
+
+**Request body**
+```json
+{}
+```
+
+**Response 200**
 ```json
 {
   "message": "Product deleted successfully."
 }
 ```
 
-## POST `/api/admin/broadcast-newsletter`
-Request JSON schema:
+### POST `/api/admin/broadcast-newsletter`
+**Headers**
+```json
+{
+  "lang": "en (optional)",
+  "country": "SG (optional)",
+  "Authorization": "Bearer <token>",
+  "Content-Type": "multipart/form-data"
+}
+```
+
+**Request body (multipart/form-data)**
+- `payload` (json string)
+- `attachments` (file list, optional)
+
+`payload` JSON schema:
 ```json
 {
   "subject": "Monthly updates",
@@ -372,17 +598,24 @@ Request JSON schema:
 }
 ```
 
-Optional `attachments` files via multipart.
-
-Response JSON:
+**Response 200**
 ```json
 {
   "message": "Newsletter broadcasted."
 }
 ```
 
-## POST `/api/admin/faqs`
-Request JSON:
+### POST `/api/admin/faqs`
+**Headers**
+```json
+{
+  "lang": "en (optional)",
+  "country": "SG (optional)",
+  "Authorization": "Bearer <token>"
+}
+```
+
+**Request body (application/json)**
 ```json
 [
   {
@@ -392,15 +625,24 @@ Request JSON:
 ]
 ```
 
-Response JSON:
+**Response 200**
 ```json
 {
   "message": "FAQs uploaded successfully."
 }
 ```
 
-## PUT `/api/admin/faqs/{faq_id}`
-Request JSON:
+### PUT `/api/admin/faqs/{faq_id}`
+**Headers**
+```json
+{
+  "lang": "en (optional)",
+  "country": "SG (optional)",
+  "Authorization": "Bearer <token>"
+}
+```
+
+**Request body (application/json)**
 ```json
 {
   "question": "Updated question",
@@ -408,23 +650,46 @@ Request JSON:
 }
 ```
 
-Response JSON:
+**Response 200**
 ```json
 {
   "message": "FAQ updated successfully."
 }
 ```
 
-## DELETE `/api/admin/faqs/{faq_id}`
-Response JSON:
+### DELETE `/api/admin/faqs/{faq_id}`
+**Headers**
+```json
+{
+  "lang": "en (optional)",
+  "country": "SG (optional)",
+  "Authorization": "Bearer <token>"
+}
+```
+
+**Request body**
+```json
+{}
+```
+
+**Response 200**
 ```json
 {
   "message": "FAQ deleted successfully."
 }
 ```
 
-## POST `/api/admin/contact-info`
-Request JSON:
+### POST `/api/admin/contact-info`
+**Headers**
+```json
+{
+  "lang": "en (optional)",
+  "country": "SG (optional)",
+  "Authorization": "Bearer <token>"
+}
+```
+
+**Request body (application/json)**
 ```json
 {
   "address": "1 Example Street",
@@ -435,33 +700,74 @@ Request JSON:
 }
 ```
 
-Response JSON:
+**Response 200**
 ```json
 {
   "message": "Contact info uploaded successfully."
 }
 ```
 
-## PUT `/api/admin/contact-info/{contact_id}`
-Request JSON: same as create contact info.
+### PUT `/api/admin/contact-info/{contact_id}`
+**Headers**
+```json
+{
+  "lang": "en (optional)",
+  "country": "SG (optional)",
+  "Authorization": "Bearer <token>"
+}
+```
 
-Response JSON:
+**Request body (application/json)**
+```json
+{
+  "address": "1 Example Street",
+  "phone": "+65 6000 0000",
+  "email": "info@example.com",
+  "working_hours": "Mon-Fri 9AM-6PM",
+  "country": "SG"
+}
+```
+
+**Response 200**
 ```json
 {
   "message": "Contact info updated successfully."
 }
 ```
 
-## DELETE `/api/admin/contact-info/{contact_id}`
-Response JSON:
+### DELETE `/api/admin/contact-info/{contact_id}`
+**Headers**
+```json
+{
+  "lang": "en (optional)",
+  "country": "SG (optional)",
+  "Authorization": "Bearer <token>"
+}
+```
+
+**Request body**
+```json
+{}
+```
+
+**Response 200**
 ```json
 {
   "message": "Contact info deleted successfully."
 }
 ```
 
-## POST `/api/admin/blogs`
-Request JSON:
+### POST `/api/admin/blogs`
+**Headers**
+```json
+{
+  "lang": "en (optional)",
+  "country": "SG (optional)",
+  "Authorization": "Bearer <token>"
+}
+```
+
+**Request body (application/json)**
 ```json
 {
   "id": 1,
@@ -475,36 +781,62 @@ Request JSON:
 }
 ```
 
-Response JSON:
+**Response 200**
 ```json
 {
   "message": "Blog uploaded successfully."
 }
 ```
 
-## PUT `/api/admin/blogs/{blog_id}`
-Request JSON: same as create blog.
+### PUT `/api/admin/blogs/{blog_id}`
+**Headers**
+```json
+{
+  "lang": "en (optional)",
+  "country": "SG (optional)",
+  "Authorization": "Bearer <token>"
+}
+```
 
-Response JSON:
+**Request body (application/json)**
+```json
+{
+  "id": 1,
+  "title": "How to select a PLC",
+  "category": "Guide",
+  "image_url": "https://cdn.example.com/blog.jpg",
+  "published_by": "PLC Automation",
+  "created_at": "01-01-2025",
+  "updated_at": "01-01-2025",
+  "content": "Long article body"
+}
+```
+
+**Response 200**
 ```json
 {
   "message": "Blog updated successfully."
 }
 ```
 
-## DELETE `/api/admin/blogs/{blog_id}`
-Response JSON:
+### DELETE `/api/admin/blogs/{blog_id}`
+**Headers**
+```json
+{
+  "lang": "en (optional)",
+  "country": "SG (optional)",
+  "Authorization": "Bearer <token>"
+}
+```
+
+**Request body**
+```json
+{}
+```
+
+**Response 200**
 ```json
 {
   "message": "Blog deleted successfully."
 }
 ```
-
----
-
-## Notes
-- Language and country can be passed via headers:
-  - `lang` (default `en`)
-  - `country` (default `SG`)
-- Some endpoints trigger SMTP email sending and will error if SMTP host is not configured.
-- Logging middleware writes structured logs under configured `logs/` paths.
