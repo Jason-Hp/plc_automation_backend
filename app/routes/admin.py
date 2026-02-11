@@ -4,10 +4,11 @@ import csv
 import io
 
 from fastapi import APIRouter, File, HTTPException, UploadFile, Depends, status
-from fastapi.security import HTTPBearer, HTTPAuthCredentials
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from app.schemas import Product, Blog, OfferProductUploadResult, AdminLoginRequest, ApiResponse, NewsLetterContentRequest, FAQRequest, ContactInfoRequest
-from app.services.jwt_service import JwtService, EmailService
+from app.services.email_service import EmailService
+from app.services.jwt_service import JwtService
 from app.repositories.newsletter_repository import NewsletterRepository
 from app.repositories.faq_repository import FaqRepository
 from app.repositories.contact_info_repository import ContactInfoRepository
@@ -24,7 +25,7 @@ contact_info_repo = ContactInfoRepository()
 blog_repo = BlogRepository()
 product_repo = ProductRepository()
 
-async def verify_token(credentials: HTTPAuthCredentials = Depends(security)) -> dict:
+async def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)) -> dict:
     try:
         token = credentials.credentials
         payload = jwt_svc.decode_jwt_token(token)
@@ -94,7 +95,7 @@ async def broadcast_newsletter(
 ) -> ApiResponse:
     
     subscribers = newsletter_repo.get_all_subscribers()
-    cc_addrs = [subscriber.email for subscriber in subscribers]
+    cc_addrs = list(subscribers)
     
     email_attachments = None
     
@@ -218,5 +219,4 @@ async def admin_login(payload: AdminLoginRequest) -> str:
         return jwt_token
     else:
         raise HTTPException(status_code=401, detail="Invalid credentials")
-
 

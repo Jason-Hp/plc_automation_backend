@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 
 from app.schemas import FAQResponse, ContactInfoResponse
 from app.utils.translation_util import translate_text
@@ -26,4 +26,7 @@ async def get_contact_info() -> list[ContactInfoResponse]:
 @router.get("/contact-info/{country}")
 async def get_contact_info_by_country(country: str) -> ContactInfoResponse:
     contact_info = contact_info_repo.get_contact_info_by_country(country)
+    if not contact_info:
+        raise HTTPException(status_code=404, detail="Contact info not found")
+
     return contact_info

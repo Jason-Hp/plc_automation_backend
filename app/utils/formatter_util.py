@@ -1,5 +1,6 @@
 import json
 from typing import Any, Dict, List
+from pydantic import BaseModel
 from app.services.log_service import LogService
 
 def _format_value(value: Any) -> str:
@@ -33,19 +34,29 @@ def _format_dict(data: Dict[str, Any], indent: int = 0) -> str:
     return items_html
 
 
-def format_form(title: str, raw_json: str) -> str:
+def _to_json_string(payload: Any) -> str:
+    if isinstance(payload, str):
+        return payload
+    if isinstance(payload, BaseModel):
+        return payload.model_dump_json()
+    if isinstance(payload, dict):
+        return json.dumps(payload)
+    return json.dumps(payload, default=str)
+
+
+def format_form(payload: Any, title: str = "Form Submission") -> str:
     """
     Format JSON form data to HTML with better styling and structure.
     
     Args:
+        payload: Request data as a JSON string, dictionary, or Pydantic model
         title: HTML title/heading
-        raw_json: JSON string to format
         
     Returns:
         Formatted HTML string
     """
     try:
-        data = json.loads(raw_json)
+        data = json.loads(_to_json_string(payload))
         
         html_parts = [
             "<style>",
