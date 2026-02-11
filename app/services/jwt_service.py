@@ -1,26 +1,39 @@
+from datetime import datetime, timedelta, timezone
+
 import jwt
-from datetime import datetime, timedelta
+
+from app.config import settings
+
+
+class JwtTokenError(Exception):
+    """Raised when a JWT token is invalid or expired."""
+
 
 class JwtService:
-    SECRET_KEY = "secret_key"  # TODO: Move to environment variable
-
     def __init__(self) -> None:
-        pass
+        self.secret_key = settings.jwt_secret_key
+        self.algorithm = settings.jwt_algorithm
+        self.expiration_hours = settings.jwt_expiration_hours
 
     def create_jwt_token(self, username: str = "admin") -> str:
-        expiration = datetime.utcnow() + timedelta(hours=3)
+        now = datetime.now(timezone.utc)
         payload = {
+            "sub": username,
             "username": username,
-            "exp": expiration
+            "iat": now,
+            "exp": now + timedelta(hours=self.expiration_hours),
         }
-        token = jwt.encode(payload, self.SECRET_KEY, algorithm="HS256")
-        return token
+        return jwt.encode(payload, self.secret_key, algorithm=self.algorithm)
 
     def decode_jwt_token(self, token: str) -> dict:
         try:
-            decoded_payload = jwt.decode(token, self.SECRET_KEY, algorithms=["HS256"])
-            return decoded_payload
-        except jwt.ExpiredSignatureError:
-            raise Exception("Token has expired")
-        except jwt.InvalidTokenError:
-            raise Exception("Invalid token")
+            return jwt.decode(
+                token,
+                self.secret_key,
+                algorithms=[self.algorithm],
+                options={"require": ["exp", "iat", "sub"]},
+            )
+        except jwt.ExpiredSignatureError as exc:
+            raise JwtTokenError("Token has expired") from exc
+        except jwt.InvalidTokenError as exc:
+            raise JwtTokenError("Invalid token") from exc

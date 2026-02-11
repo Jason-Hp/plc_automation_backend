@@ -27,6 +27,11 @@ class Settings(BaseSettings):
     quote_and_enquiry_email: str = ""
     hr_email: str = "hr@plcautomat.com"
 
+    # JWT configuration
+    jwt_secret_key: str = "change_me_in_env"
+    jwt_algorithm: str = "HS256"
+    jwt_expiration_hours: int = 3
+
     upload_dir: str = str(UPLOAD_DIR)
     database_url: str = ""
     web_log_location: str = str(LOG_DIR / "web_logs")

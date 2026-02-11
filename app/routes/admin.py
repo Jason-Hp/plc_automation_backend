@@ -8,7 +8,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from app.schemas import Product, Blog, OfferProductUploadResult, AdminLoginRequest, ApiResponse, NewsLetterContentRequest, FAQRequest, ContactInfoRequest
 from app.services.email_service import EmailService
-from app.services.jwt_service import JwtService
+from app.services.jwt_service import JwtService, JwtTokenError
 from app.repositories.newsletter_repository import NewsletterRepository
 from app.repositories.faq_repository import FaqRepository
 from app.repositories.contact_info_repository import ContactInfoRepository
@@ -30,11 +30,11 @@ async def verify_token(credentials: HTTPAuthorizationCredentials = Depends(secur
         token = credentials.credentials
         payload = jwt_svc.decode_jwt_token(token)
         return payload
-    except Exception as e:
+    except JwtTokenError as exc:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=str(e)
-        )
+            detail=str(exc)
+        ) from exc
 
 # TODO: refactor
 # This is a batch upload and/or update using CSV
