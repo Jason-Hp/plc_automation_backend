@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.middlewares.logging_middleware import LoggingMiddleware
 from app.middlewares.context_middleware import ContextMiddleware
 from app.config import settings
-from app.routes import admin, forms, infos, products, blogs
+from app.routes import admin, forms, infos, products, blogs, search
 
 app = FastAPI(title=settings.app_name)
 
@@ -30,6 +30,7 @@ app.include_router(products.router, prefix="/api")
 app.include_router(admin.router, prefix="/api")
 app.include_router(infos.router, prefix="/api")
 app.include_router(blogs.router, prefix="/api")
+app.include_router(search.router, prefix="/api")
 
 @app.get("/api/health")
 async def health_check() -> dict[str, str]:
