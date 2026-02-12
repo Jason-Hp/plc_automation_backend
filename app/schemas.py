@@ -19,6 +19,9 @@ class ProductPreview(BaseModel):
     name: str
     part_number: str
 
+    # image url or product page url
+    image_url: Optional[str] = None
+
 class Product(ProductPreview):
     manufacturer: Optional[str] = None
     stock: Optional[bool] = None
@@ -28,13 +31,10 @@ class Product(ProductPreview):
     category: Optional[str] = None
     sub_category: Optional[str] = None
 
-    # image url or product page url
-    url: Optional[str] = None
-
     available_for_countries: Optional[set[str]] = None
 
 class ProductPreviewListResponse(BaseModel):
-    items: List[ProductPreview] = []
+    product_previews: List[ProductPreview] = []
     page: int
     per_page: int
     total: int
@@ -44,7 +44,7 @@ class ProductPreviewWithQuantity(ProductPreview):
 
 # Extends EnquiryRequest
 class QuoteRequest(EnquiryRequest):
-    products: List[ProductPreviewWithQuantity] = Field(..., min_items=1)
+    product_previews_with_quantity: List[ProductPreviewWithQuantity] = Field(..., min_items=1)
 
 
 class NewsletterRequest(BaseModel):
