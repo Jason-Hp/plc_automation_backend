@@ -1,5 +1,6 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
-from app.schemas import JobPreview, Job, ApiResponse, JobApplicationRequest
+from fastapi import APIRouter, UploadFile, File, HTTPException
+
+from app.schemas import ApiResponse, Job, JobApplicationRequest, JobPreview
 from app.repositories.job_repository import JobRepository
 from app.utils.translation_util import translate_text
 from app.services.email_service import EmailService
@@ -13,18 +14,24 @@ job_repo = JobRepository()
 email_service = EmailService()
 storage_service = StorageService()
 
+
 @router.get("/", response_model=list[JobPreview])
 async def get_job_postings() -> list[JobPreview]:
     jobs = job_repo.get_all_jobs()
     return jobs
 
+
 @router.get("/{job_id}", response_model=Job)
 async def get_job_posting(job_id: int) -> Job:
     job = job_repo.get_job_by_id(job_id)
-    job.description = translate_text(job.description)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+
+    job.descritpion = translate_text(job.descritpion)
     job.requirements = translate_text(job.requirements)
     job.responsibilities = translate_text(job.responsibilities)
     return job
+
 
 @router.post("/{job_id}/application", response_model=ApiResponse)
 async def submit_job_application(
@@ -37,6 +44,8 @@ async def submit_job_application(
     storage_service.save_upload(resume.filename, resume_bytes)
 
     job = job_repo.get_job_by_id(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
 
     email_service.send(
         subject=f"Apply for [{job.title}]",

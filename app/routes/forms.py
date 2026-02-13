@@ -3,7 +3,7 @@ from __future__ import annotations
 from fastapi import APIRouter, File, HTTPException, UploadFile
 
 from app.config import settings
-from app.repositories.newsletter_repository import NewsletterRepository
+from app.repositories.newsletter_subscribers_repository import NewsletterRepository
 from app.schemas import (
     ApiResponse,
     EnquiryRequest,

@@ -9,7 +9,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from app.schemas import Country, Manufacturer, Category, Job, Product, Blog, BatchProductUploadResult, AdminLoginRequest, ApiResponse, NewsLetterContentRequest, FAQ, ContactInfo
 from app.services.email_service import EmailService
 from app.services.jwt_service import JwtService, JwtTokenError
-from app.repositories.newsletter_repository import NewsletterRepository
+from app.repositories.newsletter_subscribers_repository import NewsletterRepository
 from app.repositories.faq_repository import FaqRepository
 from app.repositories.contact_info_repository import ContactInfoRepository
 from app.repositories.blog_repository import BlogRepository
@@ -81,7 +81,7 @@ async def upload_product(
 
 @router.put("/products/{product_id}", response_model=ApiResponse)
 async def update_product(
-    product_id: str,
+    product_id: int,
     product: Product,
     country_ids: list[int],
     token_data: dict = Depends(verify_token)
@@ -90,9 +90,10 @@ async def update_product(
     country_repo.update_product_availability_for_country(country_ids, product.id)
     return ApiResponse(message="Product updated successfully.")
 
+
 @router.delete("/products/{product_id}", response_model=ApiResponse)
 async def delete_product(
-    product_id: str,
+    product_id: int,
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     product_repo.delete_product(product_id)

@@ -90,11 +90,16 @@ All endpoints below are under `/api`.
   "phone": "98765432",
   "email": "john@acme.com",
   "message": "Need quote",
-  "products": [
+  "product_previews_with_quantity": [
     {
-      "id": "sample-1",
+      "id": 1,
       "name": "SIMATIC S7-1500 CPU",
       "part_number": "CPU-1510",
+      "manufacturer": {
+        "id": 1,
+        "name": "Siemens"
+      },
+      "image_url": "https://cdn.example.com/products/cpu-1510.jpg",
       "quantity": 1
     }
   ]
@@ -151,11 +156,16 @@ All endpoints below are under `/api`.
 **Response 200**
 ```json
 {
-  "items": [
+  "product_previews": [
     {
-      "id": "sample-1",
+      "id": 1,
       "name": "SIMATIC S7-1500 CPU",
-      "part_number": "CPU-1510"
+      "part_number": "CPU-1510",
+      "manufacturer": {
+        "id": 1,
+        "name": "Siemens"
+      },
+      "image_url": "https://cdn.example.com/products/cpu-1510.jpg"
     }
   ],
   "page": 1,
@@ -181,16 +191,16 @@ All endpoints below are under `/api`.
 **Response 200**
 ```json
 {
-  "id": "sample-1",
+  "id": 1,
   "name": "SIMATIC S7-1500 CPU",
   "part_number": "CPU-1510",
-  "manufacturer": "Siemens",
+  "manufacturer": {
+    "id": 1,
+    "name": "Siemens"
+  },
+  "image_url": "https://cdn.example.com/products/cpu-1510.jpg",
   "stock": true,
-  "description": "Sample PLC CPU for wiring cabinets.",
-  "category": null,
-  "sub_category": null,
-  "url": "cpu-1510",
-  "available_for_countries": ["SG"]
+  "description": "Sample PLC CPU for wiring cabinets."
 }
 ```
 
@@ -400,7 +410,12 @@ All endpoints below are under `/api`.
     {
       "id": 1,
       "title": "How to select a PLC",
-      "category": "Guide",
+      "categories": [
+        {
+          "id": 1,
+          "name": "Guide"
+        }
+      ],
       "image_url": "https://cdn.example.com/blogs/plc-guide.jpg",
       "published_by": "PLC Automation",
       "created_at": "01-01-2025",
@@ -429,7 +444,12 @@ All endpoints below are under `/api`.
 {
   "id": 1,
   "title": "How to select a PLC",
-  "category": "Guide",
+  "categories": [
+    {
+      "id": 1,
+      "name": "Guide"
+    }
+  ],
   "image_url": "https://cdn.example.com/blogs/plc-guide.jpg",
   "published_by": "PLC Automation",
   "created_at": "01-01-2025",
@@ -467,9 +487,14 @@ All endpoints below are under `/api`.
 ```json
 [
   {
-    "id": "sample-1",
+    "id": 1,
     "name": "SIMATIC S7-1500 CPU",
-    "part_number": "CPU-1510"
+    "part_number": "CPU-1510",
+    "manufacturer": {
+      "id": 1,
+      "name": "Siemens"
+    },
+    "image_url": "https://cdn.example.com/products/cpu-1510.jpg"
   }
 ]
 ```
@@ -642,16 +667,16 @@ All endpoints below are under `/api`.
 **Request body (application/json)**
 ```json
 {
-  "id": "sample-2",
+  "id": 2,
   "name": "Relay Module",
   "part_number": "RM-100",
-  "manufacturer": "BrandX",
+  "manufacturer": {
+    "id": 2,
+    "name": "BrandX"
+  },
+  "image_url": "https://cdn.example.com/products/relay-module.jpg",
   "stock": true,
-  "description": "Industrial relay",
-  "category": "Relay",
-  "sub_category": "Interface",
-  "url": "relay-module",
-  "available_for_countries": ["SG", "MY"]
+  "description": "Industrial relay"
 }
 ```
 
@@ -675,16 +700,16 @@ All endpoints below are under `/api`.
 **Request body (application/json)**
 ```json
 {
-  "id": "sample-2",
+  "id": 2,
   "name": "Relay Module",
   "part_number": "RM-100",
-  "manufacturer": "BrandX",
+  "manufacturer": {
+    "id": 2,
+    "name": "BrandX"
+  },
+  "image_url": "https://cdn.example.com/products/relay-module.jpg",
   "stock": true,
-  "description": "Industrial relay",
-  "category": "Relay",
-  "sub_category": "Interface",
-  "url": "relay-module",
-  "available_for_countries": ["SG", "MY"]
+  "description": "Industrial relay"
 }
 ```
 
@@ -914,7 +939,12 @@ All endpoints below are under `/api`.
 {
   "id": 1,
   "title": "How to select a PLC",
-  "category": "Guide",
+  "categories": [
+    {
+      "id": 1,
+      "name": "Guide"
+    }
+  ],
   "image_url": "https://cdn.example.com/blog.jpg",
   "published_by": "PLC Automation",
   "created_at": "01-01-2025",
@@ -945,7 +975,12 @@ All endpoints below are under `/api`.
 {
   "id": 1,
   "title": "How to select a PLC",
-  "category": "Guide",
+  "categories": [
+    {
+      "id": 1,
+      "name": "Guide"
+    }
+  ],
   "image_url": "https://cdn.example.com/blog.jpg",
   "published_by": "PLC Automation",
   "created_at": "01-01-2025",
