@@ -3,10 +3,9 @@ from fastapi import APIRouter, HTTPException, Query
 from app.schemas import Blog, BlogRequest, BlogPreviewListResponse
 from app.utils.translation_util import translate_text
 
-from app.repositories.blog_repository import BlogRepository
+from app.dependencies import blog_repo
 
 router = APIRouter(prefix="/blogs", tags=["blogs"])
-blog_repo = BlogRepository()
 
 @router.post("/", response_model=BlogPreviewListResponse)
 async def get_blogs(

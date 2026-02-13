@@ -121,7 +121,7 @@ class Job(JobPreview):
     industry: str
     requirements: str
     responsibilities: str
-    descritpion: str
+    description: str
     working_hours: str
 
 class JobApplicationRequest(BaseModel):
@@ -131,4 +131,3 @@ class JobApplicationRequest(BaseModel):
     country_code: str = Field(..., min_length=1)
     phone: str = Field(..., min_length=5)
     experience: str = Field(..., min_length=1)
-

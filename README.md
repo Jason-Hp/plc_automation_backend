@@ -557,7 +557,7 @@ All endpoints below are under `/api`.
   "industry": "Automation",
   "requirements": "...",
   "responsibilities": "...",
-  "descritpion": "...",
+  "description": "...",
   "working_hours": "Mon-Fri 9AM-6PM"
 }
 ```
@@ -1039,7 +1039,7 @@ All endpoints below are under `/api`.
   "industry": "Automation",
   "requirements": "...",
   "responsibilities": "...",
-  "descritpion": "...",
+  "description": "...",
   "working_hours": "Mon-Fri 9AM-6PM"
 }
 ```
@@ -1072,7 +1072,7 @@ All endpoints below are under `/api`.
   "industry": "Automation",
   "requirements": "...",
   "responsibilities": "...",
-  "descritpion": "...",
+  "description": "...",
   "working_hours": "Mon-Fri 9AM-6PM"
 }
 ```
