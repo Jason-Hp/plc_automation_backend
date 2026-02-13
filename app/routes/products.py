@@ -2,16 +2,12 @@ from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException, Query
 
-from app.repositories.product_repository import ProductRepository
-from app.repositories.country_repository import CountryRepository
+from app.dependencies import country_repo, product_repo
 from app.schemas import ProductPreviewListResponse, Product
 from app.utils.translation_util import translate_text
 from app.utils.context_util import country_context
 
 router = APIRouter(tags=["products"])
-product_repo = ProductRepository()
-country_repo = CountryRepository()
-
 @router.get("/products", response_model=ProductPreviewListResponse)
 async def list_products(
     page: int = Query(1, ge=1),

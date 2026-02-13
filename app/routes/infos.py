@@ -4,19 +4,9 @@ from fastapi import APIRouter, HTTPException
 
 from app.schemas import FAQ, ContactInfo, Category, Manufacturer, Country
 from app.utils.translation_util import translate_text
-from app.repositories.faq_repository import FaqRepository
-from app.repositories.contact_info_repository import ContactInfoRepository
-from app.repositories.category_repository import CategoryRepository
-from app.repositories.maufacturer_repository import ManufacturerRepository
-from app.repositories.country_repository import CountryRepository
+from app.dependencies import category_repo, contact_info_repo, country_repo, faq_repo, manufacturer_repo
 
 router = APIRouter(tags=["info"])
-faq_repo = FaqRepository()
-contact_info_repo = ContactInfoRepository()
-category_repo = CategoryRepository()
-manufacturer_repo = ManufacturerRepository()
-country_repo = CountryRepository()
-
 @router.get("/faqs")
 async def get_faqs() -> list[FAQ]:
     faqs = faq_repo.get_all_faqs()

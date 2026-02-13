@@ -1,26 +1,22 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, File, HTTPException, UploadFile
+import json
+
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from pydantic import ValidationError
 
 from app.config import settings
-from app.repositories.newsletter_subscribers_repository import NewsletterRepository
+from app.dependencies import email_service, newsletter_repo
 from app.schemas import (
     ApiResponse,
     EnquiryRequest,
-    JobApplicationRequest,
     NewsletterRequest,
     QuoteRequest,
 )
-from app.services.email_service import EmailService
-from app.services.storage_service import StorageService
 from app.utils.translation_util import translate_text
 from app.utils.formatter_util import format_form
 
 router = APIRouter(tags=["forms"])
-newsletter_repo = NewsletterRepository()
-email_service = EmailService()
-storage_service = StorageService()
-
 
 def ensure_digits(value: str, field_name: str) -> None:
     if not value.isdigit():
@@ -41,13 +37,18 @@ async def submit_enquiry(payload: EnquiryRequest) -> ApiResponse:
 
 
 @router.post("/quote", response_model=ApiResponse)
-async def submit_quote(payload: QuoteRequest, attachment: UploadFile = File(None)) -> ApiResponse:
-    ensure_digits(payload.phone, "phone number")
-    
+async def submit_quote(payload: str = Form(...), attachment: UploadFile = File(None)) -> ApiResponse:
+    try:
+        parsed_payload = QuoteRequest.model_validate_json(payload)
+    except ValidationError as exc:
+        raise HTTPException(status_code=422, detail=json.loads(exc.json())) from exc
+
+    ensure_digits(parsed_payload.phone, "phone number")
+
     email_service.send(
-        subject=f"Enquiry by {payload.name}",
+        subject=f"Enquiry by {parsed_payload.name}",
         body="",
-        html_body= format_form(payload),
+        html_body=format_form(parsed_payload),
         to_addrs=[settings.quote_and_enquiry_email],
         attachments=[(attachment.filename, await attachment.read(), attachment.content_type or "application/octet-stream")] if attachment else None,
     )

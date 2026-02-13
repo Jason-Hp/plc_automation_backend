@@ -2,43 +2,38 @@ from __future__ import annotations
 
 import csv
 import io
+import json
 
-from fastapi import APIRouter, File, HTTPException, UploadFile, Depends, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
+from pydantic import ValidationError
+
 from app.schemas import Country, Manufacturer, Category, Job, Product, Blog, BatchProductUploadResult, AdminLoginRequest, ApiResponse, NewsLetterContentRequest, FAQ, ContactInfo
-from app.services.email_service import EmailService
-from app.services.jwt_service import JwtService, JwtTokenError
-from app.repositories.newsletter_subscribers_repository import NewsletterRepository
-from app.repositories.faq_repository import FaqRepository
-from app.repositories.contact_info_repository import ContactInfoRepository
-from app.repositories.blog_repository import BlogRepository
-from app.repositories.product_repository import ProductRepository
-from app.repositories.job_repository import JobRepository
-from app.repositories.category_repository import CategoryRepository
-from app.repositories.maufacturer_repository import ManufacturerRepository
-from app.repositories.country_repository import CountryRepository
 from app.config import Settings
+from app.dependencies import (
+    blog_repo,
+    category_repo,
+    contact_info_repo,
+    country_repo,
+    email_service,
+    faq_repo,
+    job_repo,
+    jwt_service,
+    manufacturer_repo,
+    newsletter_repo,
+    product_repo,
+)
+from app.services.jwt_service import JwtTokenError
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 settings = Settings()
-jwt_svc = JwtService()
 security = HTTPBearer()
-newsletter_repo = NewsletterRepository()
-email_svc = EmailService()
-faq_repo = FaqRepository()
-contact_info_repo = ContactInfoRepository()
-blog_repo = BlogRepository()
-product_repo = ProductRepository()
-job_repo = JobRepository()
-category_repo = CategoryRepository()
-manufacturer_repo = ManufacturerRepository()
-country_repo = CountryRepository()
 
 async def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)) -> dict:
     try:
         token = credentials.credentials
-        payload = jwt_svc.decode_jwt_token(token)
+        payload = jwt_service.decode_jwt_token(token)
         return payload
     except JwtTokenError as exc:
         raise HTTPException(
@@ -102,27 +97,31 @@ async def delete_product(
 
 @router.post("/broadcast-newsletter", response_model=ApiResponse)
 async def broadcast_newsletter(
-    payload: NewsLetterContentRequest,
+    payload: str = Form(...),
     attachments: list[UploadFile] = File(default=[]),
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
-    
+    try:
+        parsed_payload = NewsLetterContentRequest.model_validate_json(payload)
+    except ValidationError as exc:
+        raise HTTPException(status_code=422, detail=json.loads(exc.json())) from exc
+
     subscribers = newsletter_repo.get_all_subscribers()
     cc_addrs = list(subscribers)
-    
+
     email_attachments = None
-    
-    if attachments.__len__() > 0:
+
+    if attachments:
         email_attachments = []
         for attachment in attachments:
             email_attachments.append(
                 (attachment.filename, await attachment.read(), attachment.content_type or "application/octet-stream")
             )
-    
-    email_svc.send(
-        payload.subject,
-        payload.content,
-        email_svc.smtp_from,
+
+    email_service.send(
+        parsed_payload.subject,
+        parsed_payload.content,
+        email_service.smtp_from,
         cc_addrs,
         email_attachments
     )
@@ -356,7 +355,7 @@ async def delete_country(
 async def admin_login(payload: AdminLoginRequest) -> str:
     # TODO: return jwt token 3 hour expiry (need to change how password is accessed here for sec reasons)
     if payload.username == settings.admin_username and payload.password == settings.admin_password:
-        jwt_token = jwt_svc.create_jwt_token(payload.username)
+        jwt_token = jwt_service.create_jwt_token(payload.username)
         return jwt_token
     else:
         raise HTTPException(status_code=401, detail="Invalid credentials")
