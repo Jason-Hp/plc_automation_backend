@@ -1,8 +1,15 @@
+from __future__ import annotations
+
+from typing import Dict, List
+
 from app.schemas import Category
+
 
 class CategoryRepository:
     def __init__(self):
-        self._categories: list[Category] = []
+        self._categories: List[Category] = []
+        # In-memory join table: blog_id -> list[Category]
+        self._blog_categories: Dict[int, List[Category]] = {}
 
     def get_all_categories(self) -> list[Category]:
         return self._categories
@@ -14,18 +21,24 @@ class CategoryRepository:
         return None
     
     def add_categories_to_blog(self, blog_id: int, categories: list[Category]) -> None:
-        # Placeholder method to associate categories with a blog in a JOIN table feature id from blog and id from category
-        pass
+        """
+        Associate a set of categories with a blog via a JOIN table
+        (e.g. tbl_blog_category with blog_id, category_id).
+        """
+        self._blog_categories[blog_id] = categories
 
     def delete_all_categories_from_blog(self, blog_id: int) -> None:
-        # Placeholder method to remove all category associations for a blog in a JOIN table
-        pass
+        """
+        Remove all category associations for a blog.
+        """
+        self._blog_categories.pop(blog_id, None)
 
     def update_categories_of_blog(self, blog_id: int, categories: list[Category]) -> None:
-        # Placeholder method to update category associations for a blog in a JOIN table\
-        delete_all_categories_from_blog(blog_id)
-        add_categories_to_blog(blog_id, categories)
-        pass
+        """
+        Replace the categories associated with a blog.
+        """
+        self.delete_all_categories_from_blog(blog_id)
+        self.add_categories_to_blog(blog_id, categories)
 
     def get_category_by_name(self, name: str) -> Category | None:
         for category in self._categories:

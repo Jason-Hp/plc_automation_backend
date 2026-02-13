@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import List, Optional
 
-from app.schemas import Product, ProductPreviewListResponse
+from app.schemas import Manufacturer, Product, ProductPreviewListResponse
 
 
 class ProductRepository:
@@ -13,17 +13,16 @@ class ProductRepository:
     def __init__(self) -> None:
         self._products = [
             Product(
-                id="sample-1",
+                id=1,
                 name="SIMATIC S7-1500 CPU",
                 part_number="CPU-1510",
-                manufacturer="Siemens",
+                manufacturer=Manufacturer(id=1, name="Siemens"),
                 stock=True,
                 description="Sample PLC CPU for wiring cabinets.",
-                url="cpu-1510"
             )
         ]
 
-    def get_product_by_id(self, product_id: str) -> Optional[Product]:
+    def get_product_by_id(self, product_id: int) -> Optional[Product]:
         for item in self._products:
             if item.id == product_id:
                 return item
@@ -32,13 +31,13 @@ class ProductRepository:
     def add_product(self, product: Product) -> None:
         self._products.append(product)
 
-    def update_product(self, product_id: str, product: Product) -> None:
+    def update_product(self, product_id: int, product: Product) -> None:
         for idx, item in enumerate(self._products):
             if item.id == product_id:
                 self._products[idx] = product
                 return
             
-    def delete_product(self, product_id: str) -> None:
+    def delete_product(self, product_id: int) -> None:
         self._products = [item for item in self._products if item.id != product_id]
 
     def list_products(
@@ -55,4 +54,9 @@ class ProductRepository:
         total = len(filtered)
         start = (page - 1) * per_page
         end = start + per_page
-        return ProductPreviewListResponse(items=filtered[start:end], page=page, per_page=per_page, total=total)
+        return ProductPreviewListResponse(
+            product_previews=filtered[start:end],
+            page=page,
+            per_page=per_page,
+            total=total,
+        )

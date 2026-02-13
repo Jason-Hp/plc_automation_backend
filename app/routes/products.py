@@ -24,7 +24,7 @@ async def list_products(
     return product_repo.list_products(page=page, per_page=per_page, category=category, search=search)
 
 @router.get("/products/{product_id}", response_model=Product)
-async def get_product(product_id: str) -> Product:
+async def get_product(product_id: int) -> Product:
     product = product_repo.get_product_by_id(product_id)
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
@@ -32,8 +32,9 @@ async def get_product(product_id: str) -> Product:
     country_name = country_context.get()
     country = country_repo.get_country_by_name(country_name)
 
-    if not country_repo.get_product_availability_by_country(country.id, product.id):
-        product.stock = False
+    if country and country.id is not None and product.id is not None:
+        if not country_repo.get_product_availability_by_country(country.id, product.id):
+            product.stock = False
 
     if product.description:
         product.description = translate_text(product.description)

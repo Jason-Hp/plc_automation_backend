@@ -130,41 +130,6 @@ All endpoints below are under `/api`.
   "message": "Thank you for subscribing."
 }
 ```
-
-### POST `/api/job-application`
-**Headers**
-```json
-{
-  "lang": "en (optional)",
-  "country": "SG (optional)",
-  "Content-Type": "multipart/form-data"
-}
-```
-
-**Request body (multipart/form-data)**
-- `payload` (json string)
-- `resume` (file, required)
-
-`payload` JSON schema:
-```json
-{
-  "first_name": "Jane",
-  "last_name": "Doe",
-  "email": "jane@example.com",
-  "country_code": "65",
-  "phone": "91234567",
-  "experience": "5 years",
-  "role": "PLC Engineer"
-}
-```
-
-**Response 200**
-```json
-{
-  "message": "Application submitted successfully."
-}
-```
-
 ---
 
 ## Product Routes
@@ -326,11 +291,7 @@ All endpoints below are under `/api`.
 }
 ```
 
----
-
-## Blog Routes
-
-### GET `/api/blogs/?search=<optional>&category=<optional>&page=1&per_page=10`
+### GET `/api/categories`
 **Headers**
 ```json
 {
@@ -342,6 +303,91 @@ All endpoints below are under `/api`.
 **Request body**
 ```json
 {}
+```
+
+**Response 200**
+```json
+[
+  {
+    "id": 1,
+    "name": "PLC Systems"
+  }
+]
+```
+
+### GET `/api/manufacturers`
+**Headers**
+```json
+{
+  "lang": "en (optional)",
+  "country": "SG (optional)"
+}
+```
+
+**Request body**
+```json
+{}
+```
+
+**Response 200**
+```json
+[
+  {
+    "id": 1,
+    "name": "Siemens"
+  }
+]
+```
+
+### GET `/api/countries`
+**Headers**
+```json
+{
+  "lang": "en (optional)",
+  "country": "SG (optional)"
+}
+```
+
+**Request body**
+```json
+{}
+```
+
+**Response 200**
+```json
+[
+  {
+    "id": 1,
+    "name": "Singapore",
+    "code": "SG"
+  }
+]
+```
+
+---
+
+## Blog Routes
+
+### POST `/api/blogs/?page=1&per_page=10`
+**Headers**
+```json
+{
+  "lang": "en (optional)",
+  "country": "SG (optional)"
+}
+```
+
+**Request body**
+```json
+{
+  "search": "PLC",
+  "categories": [
+    {
+      "id": 1,
+      "name": "Guide"
+    }
+  ]
+}
 ```
 
 **Response 200**
@@ -426,6 +472,102 @@ All endpoints below are under `/api`.
     "part_number": "CPU-1510"
   }
 ]
+```
+
+---
+
+## Job Routes
+
+### GET `/api/jobs/`
+**Headers**
+```json
+{
+  "lang": "en (optional)",
+  "country": "SG (optional)"
+}
+```
+
+**Request body**
+```json
+{}
+```
+
+**Response 200**
+```json
+[
+  {
+    "id": 1,
+    "title": "PLC Engineer",
+    "country": "SG",
+    "location": "Singapore",
+    "job_type": "Full-time",
+    "posted_date": "01-01-2025"
+  }
+]
+```
+
+### GET `/api/jobs/{job_id}`
+**Headers**
+```json
+{
+  "lang": "en (optional)",
+  "country": "SG (optional)"
+}
+```
+
+**Request body**
+```json
+{}
+```
+
+**Response 200**
+```json
+{
+  "id": 1,
+  "title": "PLC Engineer",
+  "country": "SG",
+  "location": "Singapore",
+  "job_type": "Full-time",
+  "posted_date": "01-01-2025",
+  "industry": "Automation",
+  "requirements": "...",
+  "responsibilities": "...",
+  "descritpion": "...",
+  "working_hours": "Mon-Fri 9AM-6PM"
+}
+```
+
+### POST `/api/jobs/{job_id}/application`
+**Headers**
+```json
+{
+  "lang": "en (optional)",
+  "country": "SG (optional)",
+  "Content-Type": "multipart/form-data"
+}
+```
+
+**Request body (multipart/form-data)**
+- `payload` (json string)
+- `resume` (file, required)
+
+`payload` JSON schema:
+```json
+{
+  "first_name": "Jane",
+  "last_name": "Doe",
+  "email": "jane@example.com",
+  "country_code": "65",
+  "phone": "91234567",
+  "experience": "5 years"
+}
+```
+
+**Response 200**
+```json
+{
+  "message": "Application submitted successfully."
+}
 ```
 
 ---
@@ -838,5 +980,305 @@ All endpoints below are under `/api`.
 ```json
 {
   "message": "Blog deleted successfully."
+}
+```
+
+### POST `/api/admin/jobs`
+**Headers**
+```json
+{
+  "lang": "en (optional)",
+  "country": "SG (optional)",
+  "Authorization": "Bearer <token>"
+}
+```
+
+**Request body (application/json)**
+```json
+{
+  "title": "PLC Engineer",
+  "country": "SG",
+  "location": "Singapore",
+  "job_type": "Full-time",
+  "posted_date": "01-01-2025",
+  "industry": "Automation",
+  "requirements": "...",
+  "responsibilities": "...",
+  "descritpion": "...",
+  "working_hours": "Mon-Fri 9AM-6PM"
+}
+```
+
+**Response 200**
+```json
+{
+  "message": "Job uploaded successfully."
+}
+```
+
+### PUT `/api/admin/jobs/{job_id}`
+**Headers**
+```json
+{
+  "lang": "en (optional)",
+  "country": "SG (optional)",
+  "Authorization": "Bearer <token>"
+}
+```
+
+**Request body (application/json)**
+```json
+{
+  "title": "PLC Engineer",
+  "country": "SG",
+  "location": "Singapore",
+  "job_type": "Full-time",
+  "posted_date": "01-01-2025",
+  "industry": "Automation",
+  "requirements": "...",
+  "responsibilities": "...",
+  "descritpion": "...",
+  "working_hours": "Mon-Fri 9AM-6PM"
+}
+```
+
+**Response 200**
+```json
+{
+  "message": "Job updated successfully."
+}
+```
+
+### DELETE `/api/admin/jobs/{job_id}`
+**Headers**
+```json
+{
+  "lang": "en (optional)",
+  "country": "SG (optional)",
+  "Authorization": "Bearer <token>"
+}
+```
+
+**Request body**
+```json
+{}
+```
+
+**Response 200**
+```json
+{
+  "message": "Job deleted successfully."
+}
+```
+
+### POST `/api/admin/categories`
+**Headers**
+```json
+{
+  "lang": "en (optional)",
+  "country": "SG (optional)",
+  "Authorization": "Bearer <token>"
+}
+```
+
+**Request body (application/json)**
+```json
+{
+  "name": "PLC Systems"
+}
+```
+
+**Response 200**
+```json
+{
+  "message": "Category uploaded successfully."
+}
+```
+
+### PUT `/api/admin/categories/{category_id}`
+**Headers**
+```json
+{
+  "lang": "en (optional)",
+  "country": "SG (optional)",
+  "Authorization": "Bearer <token>"
+}
+```
+
+**Request body (application/json)**
+```json
+{
+  "name": "PLC Systems"
+}
+```
+
+**Response 200**
+```json
+{
+  "message": "Category updated successfully."
+}
+```
+
+### DELETE `/api/admin/categories/{category_id}`
+**Headers**
+```json
+{
+  "lang": "en (optional)",
+  "country": "SG (optional)",
+  "Authorization": "Bearer <token>"
+}
+```
+
+**Request body**
+```json
+{}
+```
+
+**Response 200**
+```json
+{
+  "message": "Category deleted successfully."
+}
+```
+
+### POST `/api/admin/manufacturers`
+**Headers**
+```json
+{
+  "lang": "en (optional)",
+  "country": "SG (optional)",
+  "Authorization": "Bearer <token>"
+}
+```
+
+**Request body (application/json)**
+```json
+{
+  "name": "Siemens"
+}
+```
+
+**Response 200**
+```json
+{
+  "message": "Manufacturer uploaded successfully."
+}
+```
+
+### PUT `/api/admin/manufacturers/{manufacturer_id}`
+**Headers**
+```json
+{
+  "lang": "en (optional)",
+  "country": "SG (optional)",
+  "Authorization": "Bearer <token>"
+}
+```
+
+**Request body (application/json)**
+```json
+{
+  "name": "Siemens"
+}
+```
+
+**Response 200**
+```json
+{
+  "message": "Manufacturer updated successfully."
+}
+```
+
+### DELETE `/api/admin/manufacturers/{manufacturer_id}`
+**Headers**
+```json
+{
+  "lang": "en (optional)",
+  "country": "SG (optional)",
+  "Authorization": "Bearer <token>"
+}
+```
+
+**Request body**
+```json
+{}
+```
+
+**Response 200**
+```json
+{
+  "message": "Manufacturer deleted successfully."
+}
+```
+
+### POST `/api/admin/countries`
+**Headers**
+```json
+{
+  "lang": "en (optional)",
+  "country": "SG (optional)",
+  "Authorization": "Bearer <token>"
+}
+```
+
+**Request body (application/json)**
+```json
+{
+  "name": "Singapore",
+  "code": "SG"
+}
+```
+
+**Response 200**
+```json
+{
+  "message": "Country uploaded successfully."
+}
+```
+
+### PUT `/api/admin/countries/{country_id}`
+**Headers**
+```json
+{
+  "lang": "en (optional)",
+  "country": "SG (optional)",
+  "Authorization": "Bearer <token>"
+}
+```
+
+**Request body (application/json)**
+```json
+{
+  "name": "Singapore",
+  "code": "SG"
+}
+```
+
+**Response 200**
+```json
+{
+  "message": "Country updated successfully."
+}
+```
+
+### DELETE `/api/admin/countries/{country_id}`
+**Headers**
+```json
+{
+  "lang": "en (optional)",
+  "country": "SG (optional)",
+  "Authorization": "Bearer <token>"
+}
+```
+
+**Request body**
+```json
+{}
+```
+
+**Response 200**
+```json
+{
+  "message": "Country deleted successfully."
 }
 ```
