@@ -27,6 +27,7 @@ class ProductPreview(BaseModel):
     # image url or product page url
     image_url: Optional[str] = None
 
+# Potentially remove code?
 class Country(BaseModel):
     id: Optional[int] = None
     name: str
