@@ -3,13 +3,14 @@ from __future__ import annotations
 from fastapi import APIRouter, HTTPException, Query
 
 from app.repositories.product_repository import ProductRepository
+from app.repositories.country_repository import CountryRepository
 from app.schemas import ProductPreviewListResponse, Product
 from app.utils.translation_util import translate_text
 from app.utils.context_util import country_context
 
 router = APIRouter(tags=["products"])
 product_repo = ProductRepository()
-
+country_repo = CountryRepository()
 
 @router.get("/products", response_model=ProductPreviewListResponse)
 async def list_products(
@@ -28,9 +29,10 @@ async def get_product(product_id: str) -> Product:
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
 
-    country = country_context.get()
-    # If not available in the country, set stock to False to indicate that it's not orderable. This is a temporary workaround until we have proper product availability handling in place.
-    if product.available_for_countries and country not in product.available_for_countries:
+    country_name = country_context.get()
+    country = country_repo.get_country_by_name(country_name)
+
+    if not country_repo.get_product_availability_by_country(country.id, product.id):
         product.stock = False
 
     if product.description:

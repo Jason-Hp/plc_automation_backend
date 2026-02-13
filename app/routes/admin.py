@@ -6,7 +6,7 @@ import io
 from fastapi import APIRouter, File, HTTPException, UploadFile, Depends, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
-from app.schemas import Job, Product, Blog, OfferProductUploadResult, AdminLoginRequest, ApiResponse, NewsLetterContentRequest, FAQRequest, ContactInfoRequest
+from app.schemas import Country, Manufacturer, Category, Job, Product, Blog, BatchProductUploadResult, AdminLoginRequest, ApiResponse, NewsLetterContentRequest, FAQ, ContactInfo
 from app.services.email_service import EmailService
 from app.services.jwt_service import JwtService, JwtTokenError
 from app.repositories.newsletter_repository import NewsletterRepository
@@ -15,8 +15,13 @@ from app.repositories.contact_info_repository import ContactInfoRepository
 from app.repositories.blog_repository import BlogRepository
 from app.repositories.product_repository import ProductRepository
 from app.repositories.job_repository import JobRepository
+from app.repositories.category_repository import CategoryRepository
+from app.repositories.maufacturer_repository import ManufacturerRepository
+from app.repositories.country_repository import CountryRepository
+from app.config import Settings
 
 router = APIRouter(prefix="/admin", tags=["admin"])
+settings = Settings()
 jwt_svc = JwtService()
 security = HTTPBearer()
 newsletter_repo = NewsletterRepository()
@@ -26,6 +31,9 @@ contact_info_repo = ContactInfoRepository()
 blog_repo = BlogRepository()
 product_repo = ProductRepository()
 job_repo = JobRepository()
+category_repo = CategoryRepository()
+manufacturer_repo = ManufacturerRepository()
+country_repo = CountryRepository()
 
 async def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)) -> dict:
     try:
@@ -40,11 +48,11 @@ async def verify_token(credentials: HTTPAuthorizationCredentials = Depends(secur
 
 # TODO: refactor
 # This is a batch upload and/or update using CSV
-@router.post("/products/batch", response_model=OfferProductUploadResult)
+@router.post("/products/batch", response_model=BatchProductUploadResult)
 async def upload_offer_products(
     csv_file: UploadFile = File(...),
     token_data: dict = Depends(verify_token)
-) -> OfferProductUploadResult:
+) -> BatchProductUploadResult:
     if not csv_file.filename.endswith(".csv"):
         raise HTTPException(status_code=400, detail="Only CSV files are supported.")
 
@@ -59,25 +67,27 @@ async def upload_offer_products(
         _ = row
         processed += 1
 
-    return OfferProductUploadResult(processed=processed, message="CSV processed (placeholder).")
+    return BatchProductUploadResult(processed=processed, message="CSV processed (placeholder).")
 
 @router.post("/products", response_model=ApiResponse)
 async def upload_product(
     product: Product,
+    country_ids: list[int],
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     product_repo.add_product(product)
-    
+    country_repo.add_product_availability_for_country(country_ids, product.id)
     return ApiResponse(message="Product uploaded successfully.")
 
 @router.put("/products/{product_id}", response_model=ApiResponse)
 async def update_product(
     product_id: str,
     product: Product,
+    country_ids: list[int],
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     product_repo.update_product(product_id, product)
-
+    country_repo.update_product_availability_for_country(country_ids, product.id)
     return ApiResponse(message="Product updated successfully.")
 
 @router.delete("/products/{product_id}", response_model=ApiResponse)
@@ -86,7 +96,7 @@ async def delete_product(
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     product_repo.delete_product(product_id)
-
+    country_repo.delete_all_product_availability_for_country(product_id)
     return ApiResponse(message="Product deleted successfully.") 
 
 @router.post("/broadcast-newsletter", response_model=ApiResponse)
@@ -120,7 +130,7 @@ async def broadcast_newsletter(
 
 @router.post("/faqs", response_model=ApiResponse)
 async def upload_faqs(
-    faqs: list[FAQRequest],
+    faqs: list[FAQ],
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     
@@ -133,7 +143,7 @@ async def upload_faqs(
 @router.put("/faqs/{faq_id}", response_model=ApiResponse)
 async def update_faq(
     faq_id: int,
-    faq: FAQRequest,
+    faq: FAQ,
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     
@@ -153,7 +163,7 @@ async def delete_faq(
 
 @router.post("/contact-info", response_model=ApiResponse)
 async def upload_contact_info(
-    contact_info: ContactInfoRequest,
+    contact_info: ContactInfo,
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     
@@ -164,7 +174,7 @@ async def upload_contact_info(
 @router.put("/contact-info/{contact_id}", response_model=ApiResponse)
 async def update_contact_info(
     contact_id: int,
-    contact_info: ContactInfoRequest,
+    contact_info: ContactInfo,
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     
@@ -185,21 +195,24 @@ async def delete_contact_info(
 @router.post("/blogs", response_model=ApiResponse)
 async def upload_blog(
     blog: Blog,
+    categories: list[Category],
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     
-    blog_repo.add_blog(blog)
-
+    blog = blog_repo.add_blog(blog)
+    category_repo.add_categories_to_blog(blog.id, categories)
     return ApiResponse(message="Blog uploaded successfully.")
 
 @router.put("/blogs/{blog_id}", response_model=ApiResponse)
 async def update_blog(
     blog_id: int,
     blog: Blog,
+    categories: list[Category],
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     
     blog_repo.update_blog(blog_id, blog)
+    category_repo.update_categories_of_blog(blog_id, categories)
 
     return ApiResponse(message="Blog updated successfully.")
 
@@ -210,6 +223,7 @@ async def delete_blog(
 ) -> ApiResponse:
     
     blog_repo.delete_blog(blog_id)
+    category_repo.delete_all_categories_from_blog(blog_id)
 
     return ApiResponse(message="Blog deleted successfully.")
 
@@ -244,10 +258,103 @@ async def delete_job(
 
     return ApiResponse(message="Job deleted successfully.")
 
+@router.post("/categories", response_model=ApiResponse)
+async def upload_category(
+    category: Category,
+    token_data: dict = Depends(verify_token)
+) -> ApiResponse:
+    
+    category_repo.add_category(category)
+
+    return ApiResponse(message="Category uploaded successfully.")
+
+@router.put("/categories/{category_id}", response_model=ApiResponse)
+async def update_category(
+    category_id: int,
+    category: Category,
+    token_data: dict = Depends(verify_token)
+) -> ApiResponse:
+    
+    category_repo.update_category(category_id, category)
+
+    return ApiResponse(message="Category updated successfully.")
+
+@router.delete("/categories/{category_id}", response_model=ApiResponse)
+async def delete_category(  
+    category_id: int,
+    token_data: dict = Depends(verify_token)
+) -> ApiResponse:
+    
+    category_repo.delete_category(category_id)
+
+    return ApiResponse(message="Category deleted successfully.")
+
+@router.post("/manufacturers", response_model=ApiResponse)
+async def upload_manufacturer(
+    manufacturer: Manufacturer,
+    token_data: dict = Depends(verify_token)
+) -> ApiResponse:
+    
+    manufacturer_repo.add_manufacturer(manufacturer)
+
+    return ApiResponse(message="Manufacturer uploaded successfully.")
+
+@router.put("/manufacturers/{manufacturer_id}", response_model=ApiResponse)
+async def update_manufacturer(
+    manufacturer_id: int,
+    manufacturer: Manufacturer,
+    token_data: dict = Depends(verify_token)
+) -> ApiResponse:
+    
+    manufacturer_repo.update_manufacturer(manufacturer_id, manufacturer)
+
+    return ApiResponse(message="Manufacturer updated successfully.")
+
+@router.delete("/manufacturers/{manufacturer_id}", response_model=ApiResponse)
+async def delete_manufacturer(  
+    manufacturer_id: int,
+    token_data: dict = Depends(verify_token)
+) -> ApiResponse:
+    
+    manufacturer_repo.delete_manufacturer(manufacturer_id)
+
+    return ApiResponse(message="Manufacturer deleted successfully.")
+
+@router.post("/countries", response_model=ApiResponse)
+async def upload_country(
+    country: Country,
+    token_data: dict = Depends(verify_token)
+) -> ApiResponse:
+    
+    country_repo.add_country(country)
+
+    return ApiResponse(message="Country uploaded successfully.")
+
+@router.put("/countries/{country_id}", response_model=ApiResponse)
+async def update_country(
+    country_id: int,
+    country: Country,
+    token_data: dict = Depends(verify_token)
+) -> ApiResponse:
+    
+    country_repo.update_country(country_id, country)
+
+    return ApiResponse(message="Country updated successfully.")
+
+@router.delete("/countries/{country_id}", response_model=ApiResponse)
+async def delete_country(  
+    country_id: int,
+    token_data: dict = Depends(verify_token)
+) -> ApiResponse:
+    
+    country_repo.delete_country(country_id)
+
+    return ApiResponse(message="Country deleted successfully.")
+
 @router.post("/login")
 async def admin_login(payload: AdminLoginRequest) -> str:
-    # return jwt token 3 hour expiry (need to change how password is accessed here for sec reasons)
-    if payload.username == "admin" and payload.password == "password":
+    # TODO: return jwt token 3 hour expiry (need to change how password is accessed here for sec reasons)
+    if payload.username == settings.admin_username and payload.password == settings.admin_password:
         jwt_token = jwt_svc.create_jwt_token(payload.username)
         return jwt_token
     else:

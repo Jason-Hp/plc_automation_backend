@@ -14,19 +14,27 @@ class EnquiryRequest(BaseModel):
     email: str = Field(..., min_length=3)
     message: str = Field("", max_length=2000)
 
+class Manufacturer(BaseModel):
+    id: Optional[int] = None
+    name: str
+
 class ProductPreview(BaseModel):
-    id: str
+    id: Optional[int]
     name: str
     part_number: str
+    manufacturer: Manufacturer
 
     # image url or product page url
     image_url: Optional[str] = None
 
+class Country(BaseModel):
+    id: Optional[int] = None
+    name: str
+    code: str
+
 class Product(ProductPreview):
-    manufacturer: Optional[str] = None
-    stock: Optional[bool] = None
+    stock: bool
     description: Optional[str] = None
-    available_for_countries: Optional[set[str]] = None
 
 class ProductPreviewListResponse(BaseModel):
     product_previews: List[ProductPreview] = []
@@ -45,7 +53,7 @@ class QuoteRequest(EnquiryRequest):
 class NewsletterRequest(BaseModel):
     email: str = Field(..., min_length=3)
 
-class OfferProductUploadResult(BaseModel):
+class BatchProductUploadResult(BaseModel):
     processed: int
     message: str
 
@@ -58,28 +66,27 @@ class NewsLetterContentRequest(BaseModel):
     content: str = Field(..., min_length=1)
 
 # TODO: refactor these schema FAQ, req and resp -> for FAQ and Contact Info
-class FAQRequest(BaseModel):
+class FAQ(BaseModel):
+    id: Optional[int] = None
     question: str = Field(..., min_length=1)
     answer: str = Field(..., min_length=1)
 
-class FAQResponse(FAQRequest):
-    id: int
-
-class ContactInfoRequest(BaseModel):
+class ContactInfo(BaseModel):
+    id: Optional[int] = None
     address: str
     phone: str
     email: str = Field(..., min_length=3)
     working_hours: str
     country: str
 
-
-class ContactInfoResponse(ContactInfoRequest):
-    id: int
+class Category(BaseModel):
+    id: Optional[int] = None
+    name: str
 
 class BlogPreview(BaseModel):
-    id: int
+    id: Optional[int] = None
     title: str
-    category: str
+    categories: List[Category]
     image_url: str
     published_by: str
 
@@ -92,7 +99,7 @@ class Blog(BlogPreview):
 
 class BlogRequest(BaseModel):
     search: Optional[str]
-    category: Optional[str]
+    categories: Optional[list[Category]]
 
 
 class BlogPreviewListResponse(BaseModel):
@@ -102,7 +109,7 @@ class BlogPreviewListResponse(BaseModel):
     blog_previews: List[BlogPreview] = []
 
 class JobPreview(BaseModel):
-    id: int
+    id: Optional[int] = None
     title: str
     country: str
     location: str

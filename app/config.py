@@ -32,6 +32,10 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     jwt_expiration_hours: int = 3
 
+    # Admin credentials (TODO: CHANGE IN PRODUCTION ENV)
+    admin_username: str = "admin"
+    admin_password: str = "password"
+
     upload_dir: str = str(UPLOAD_DIR)
     database_url: str = ""
     web_log_location: str = str(LOG_DIR / "web_logs")

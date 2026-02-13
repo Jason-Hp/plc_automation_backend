@@ -19,8 +19,7 @@ class ProductRepository:
                 manufacturer="Siemens",
                 stock=True,
                 description="Sample PLC CPU for wiring cabinets.",
-                url="cpu-1510",
-                available_for_countries={"SG"},
+                url="cpu-1510"
             )
         ]
 
