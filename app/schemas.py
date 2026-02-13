@@ -26,11 +26,6 @@ class Product(ProductPreview):
     manufacturer: Optional[str] = None
     stock: Optional[bool] = None
     description: Optional[str] = None
-
-    # These 2 fields may or may not be removed in the future if there is no need to categorise products
-    category: Optional[str] = None
-    sub_category: Optional[str] = None
-
     available_for_countries: Optional[set[str]] = None
 
 class ProductPreviewListResponse(BaseModel):
@@ -49,17 +44,6 @@ class QuoteRequest(EnquiryRequest):
 
 class NewsletterRequest(BaseModel):
     email: str = Field(..., min_length=3)
-
-
-class JobApplicationRequest(BaseModel):
-    first_name: str = Field(..., min_length=1)
-    last_name: str = Field(..., min_length=1)
-    email: str = Field(..., min_length=3)
-    country_code: str = Field(..., min_length=1)
-    phone: str = Field(..., min_length=5)
-    experience: str = Field(..., min_length=1)
-    role: str = Field(..., min_length=1)
-
 
 class OfferProductUploadResult(BaseModel):
     processed: int
@@ -116,3 +100,27 @@ class BlogPreviewListResponse(BaseModel):
     per_page: int
     total: int
     blog_previews: List[BlogPreview] = []
+
+class JobPreview(BaseModel):
+    id: int
+    title: str
+    country: str
+    location: str
+    job_type: str
+    posted_date: str  # DD - MM - YYYY
+
+class Job(JobPreview):
+    industry: str
+    requirements: str
+    responsibilities: str
+    descritpion: str
+    working_hours: str
+
+class JobApplicationRequest(BaseModel):
+    first_name: str = Field(..., min_length=1)
+    last_name: str = Field(..., min_length=1)
+    email: str = Field(..., min_length=3)
+    country_code: str = Field(..., min_length=1)
+    phone: str = Field(..., min_length=5)
+    experience: str = Field(..., min_length=1)
+

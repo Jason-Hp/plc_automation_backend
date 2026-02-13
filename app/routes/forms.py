@@ -83,23 +83,4 @@ async def subscribe_newsletter(payload: NewsletterRequest) -> ApiResponse:
     return ApiResponse(message=translate_text("Thank you for subscribing."))
 
 
-@router.post("/job-application", response_model=ApiResponse)
-async def submit_job_application(
-    payload: JobApplicationRequest,
-    resume: UploadFile = File(...),
-) -> ApiResponse:
-    ensure_digits(payload.phone, "phone number")
-    resume_bytes = await resume.read()
-    storage_service.save_upload(resume.filename, resume_bytes)
-
-    email_service.send(
-        subject=f"Apply Job {payload.first_name} {payload.last_name}",
-        body="",
-        html_body=format_form(payload),
-        to_addrs=[settings.hr_email],
-        attachments=[(resume.filename, resume_bytes, resume.content_type or "application/octet-stream")],
-    )
-
-    return ApiResponse(message=translate_text("Application submitted successfully."))
-
 

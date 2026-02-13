@@ -6,7 +6,7 @@ import io
 from fastapi import APIRouter, File, HTTPException, UploadFile, Depends, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
-from app.schemas import Product, Blog, OfferProductUploadResult, AdminLoginRequest, ApiResponse, NewsLetterContentRequest, FAQRequest, ContactInfoRequest
+from app.schemas import Job, Product, Blog, OfferProductUploadResult, AdminLoginRequest, ApiResponse, NewsLetterContentRequest, FAQRequest, ContactInfoRequest
 from app.services.email_service import EmailService
 from app.services.jwt_service import JwtService, JwtTokenError
 from app.repositories.newsletter_repository import NewsletterRepository
@@ -14,6 +14,7 @@ from app.repositories.faq_repository import FaqRepository
 from app.repositories.contact_info_repository import ContactInfoRepository
 from app.repositories.blog_repository import BlogRepository
 from app.repositories.product_repository import ProductRepository
+from app.repositories.job_repository import JobRepository
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 jwt_svc = JwtService()
@@ -24,6 +25,7 @@ faq_repo = FaqRepository()
 contact_info_repo = ContactInfoRepository()
 blog_repo = BlogRepository()
 product_repo = ProductRepository()
+job_repo = JobRepository()
 
 async def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)) -> dict:
     try:
@@ -210,6 +212,37 @@ async def delete_blog(
     blog_repo.delete_blog(blog_id)
 
     return ApiResponse(message="Blog deleted successfully.")
+
+@router.post("/jobs", response_model=ApiResponse)
+async def upload_job(
+    job: Job,
+    token_data: dict = Depends(verify_token)
+) -> ApiResponse:
+    
+    job_repo.add_job(job)
+
+    return ApiResponse(message="Job uploaded successfully.")
+
+@router.put("/jobs/{job_id}", response_model=ApiResponse)
+async def update_job(
+    job_id: int,
+    job: Job,
+    token_data: dict = Depends(verify_token)
+) -> ApiResponse:
+    
+    job_repo.update_job(job_id, job)
+
+    return ApiResponse(message="Job updated successfully.")
+
+@router.delete("/jobs/{job_id}", response_model=ApiResponse)
+async def delete_job(
+    job_id: int,
+    token_data: dict = Depends(verify_token)
+) -> ApiResponse:
+    
+    job_repo.delete_job(job_id)
+
+    return ApiResponse(message="Job deleted successfully.")
 
 @router.post("/login")
 async def admin_login(payload: AdminLoginRequest) -> str:
