@@ -1317,3 +1317,219 @@ All endpoints below are under `/api`.
   "message": "Country deleted successfully."
 }
 ```
+
+### GET `/api/admin/quotes?search=<optional>&page=1&per_page=10`
+**Headers**
+```json
+{
+  "lang": "en (optional)",
+  "country": "SG (optional)",
+  "Authorization": "Bearer <token>"
+}
+```
+
+**Request body**
+```json
+{}
+```
+
+**Response 200**
+```json
+{
+  "page": 1,
+  "per_page": 10,
+  "total": 1,
+  "quotes": [
+    {
+      "id": 1,
+      "name": "John Doe",
+      "company_name": "ACME Industrial",
+      "country_code": "65",
+      "phone": "98765432",
+      "email": "john@acme.com",
+      "message": "Need quote",
+      "created_at": "2026-01-01T00:00:00+00:00",
+      "is_paid": false,
+      "total_amount": 0,
+      "product_previews_with_quantity": [
+        {
+          "id": 1,
+          "name": "SIMATIC S7-1500 CPU",
+          "part_number": "CPU-1510",
+          "manufacturer": {
+            "id": 1,
+            "name": "Siemens"
+          },
+          "image_url": "https://cdn.example.com/products/cpu-1510.jpg",
+          "quantity": 2
+        }
+      ]
+    }
+  ]
+}
+```
+
+### GET `/api/admin/quote/{quote_id}`
+**Headers**
+```json
+{
+  "lang": "en (optional)",
+  "country": "SG (optional)",
+  "Authorization": "Bearer <token>"
+}
+```
+
+**Request body**
+```json
+{}
+```
+
+**Response 200**
+```json
+{
+  "id": 1,
+  "name": "John Doe",
+  "company_name": "ACME Industrial",
+  "country_code": "65",
+  "phone": "98765432",
+  "email": "john@acme.com",
+  "message": "Need quote",
+  "created_at": "2026-01-01T00:00:00+00:00",
+  "is_paid": false,
+  "total_amount": 0,
+  "product_previews_with_quantity": [
+    {
+      "id": 1,
+      "name": "SIMATIC S7-1500 CPU",
+      "part_number": "CPU-1510",
+      "manufacturer": {
+        "id": 1,
+        "name": "Siemens"
+      },
+      "image_url": "https://cdn.example.com/products/cpu-1510.jpg",
+      "quantity": 2
+    }
+  ]
+}
+```
+
+### POST `/api/admin/quotes`
+**Headers**
+```json
+{
+  "lang": "en (optional)",
+  "country": "SG (optional)",
+  "Authorization": "Bearer <token>"
+}
+```
+
+**Request body (application/json)**
+```json
+{
+  "name": "John Doe",
+  "company_name": "ACME Industrial",
+  "country_code": "65",
+  "phone": "98765432",
+  "email": "john@acme.com",
+  "message": "Need quote",
+  "is_paid": false,
+  "total_amount": 0,
+  "product_previews_with_quantity": [
+    {
+      "id": 1,
+      "name": "SIMATIC S7-1500 CPU",
+      "part_number": "CPU-1510",
+      "manufacturer": {
+        "id": 1,
+        "name": "Siemens"
+      },
+      "image_url": "https://cdn.example.com/products/cpu-1510.jpg",
+      "quantity": 2
+    }
+  ]
+}
+```
+
+**Response 200**
+```json
+{
+  "message": "Quote added successfully."
+}
+```
+
+### PUT `/api/admin/quote/{quote_id}`
+**Headers**
+```json
+{
+  "lang": "en (optional)",
+  "country": "SG (optional)",
+  "Authorization": "Bearer <token>"
+}
+```
+
+**Request body (application/json)**
+```json
+{
+  "name": "John Doe",
+  "company_name": "ACME Industrial",
+  "country_code": "65",
+  "phone": "98765432",
+  "email": "john@acme.com",
+  "message": "Updated quote request",
+  "is_paid": true,
+  "total_amount": 500,
+  "product_previews_with_quantity": [
+    {
+      "id": 1,
+      "name": "SIMATIC S7-1500 CPU",
+      "part_number": "CPU-1510",
+      "manufacturer": {
+        "id": 1,
+        "name": "Siemens"
+      },
+      "image_url": "https://cdn.example.com/products/cpu-1510.jpg",
+      "quantity": 1
+    }
+  ]
+}
+```
+
+**Response 200**
+```json
+{
+  "message": "Quote updated successfully."
+}
+```
+
+### DELETE `/api/admin/quote/{quote_id}`
+**Headers**
+```json
+{
+  "lang": "en (optional)",
+  "country": "SG (optional)",
+  "Authorization": "Bearer <token>"
+}
+```
+
+**Request body**
+```json
+{}
+```
+
+**Response 200**
+```json
+{
+  "message": "Quote deleted successfully."
+}
+```
+
+---
+
+## Quote repository mock behavior
+
+`QuoteRepository` is currently implemented as an in-memory mock with:
+
+- a **quote table** (`_quote_table`) for quote entity fields
+- a **quote-products join table** (`_quote_products_table`) for `quote_id`, `product_id`, and `quantity`
+
+This mock supports add/get/list/update/delete flows and keeps product quantities in the join table layer.
