@@ -12,7 +12,7 @@ class EnquiryRequest(BaseModel):
     phone: str = Field(..., min_length=5)
     email: str = Field(..., min_length=3)
     message: str = Field("", max_length=2000)
-    created_at: str
+    created_at: Optional[str] = None
 
 class Manufacturer(BaseModel):
     id: Optional[int] = None
