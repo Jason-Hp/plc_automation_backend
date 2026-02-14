@@ -46,7 +46,7 @@ class QuoteRepository:
         quote_id = self._next_quote_id
         self._next_quote_id += 1
 
-        # Simulate quote entity/table persistence
+        # Simulate quote entity/table persistence basically quote entity has everything quote has but not the product preview list (that belongs to the join table)
         quote_entity = quote.model_copy(deep=True)
         quote_entity.id = quote_id
         quote_entity.created_at = quote_entity.created_at or datetime.now(timezone.utc).isoformat()
