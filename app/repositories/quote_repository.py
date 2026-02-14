@@ -20,7 +20,7 @@ class QuoteRepository:
     def add_quote(self, quote: Quote) -> int:
         # Break quote object into 
         # actual persistence/entity quote which is id, ispaid, total amount, and everything in enquiryrequests schema
-        # add that into quote repo/entity
+        # add that into quote repo/entity with created_at to be now()
         # then retrieve the product preview with quantity list from quote
         # for each product, get the id and quantity right, then add it in the JOIN table QUOTES_PRODUCTS
         # add the quote id, product id and quantity
