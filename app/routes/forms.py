@@ -46,7 +46,7 @@ async def submit_quote(payload: str = Form(...), attachment: UploadFile = File(N
 
     ensure_digits(parsed_payload.phone, "phone number")
 
-    quote = Quote(parsed_payload)
+    quote = Quote(**parsed_payload.model_dump())
     quote_repo.add_quote(quote)
 
     email_service.send(
