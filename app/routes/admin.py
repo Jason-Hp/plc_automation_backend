@@ -3,13 +3,14 @@ from __future__ import annotations
 import csv
 import io
 import json
+from typing import Optional
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status, Query
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from pydantic import ValidationError
 
-from app.schemas import Country, Manufacturer, Category, Job, Product, Blog, BatchProductUploadResult, AdminLoginRequest, ApiResponse, NewsLetterContentRequest, FAQ, ContactInfo
+from app.schemas import QuoteListResponse, Quote, Country, Manufacturer, Category, Job, Product, Blog, BatchProductUploadResult, AdminLoginRequest, ApiResponse, NewsLetterContentRequest, FAQ, ContactInfo
 from app.config import Settings
 from app.dependencies import (
     blog_repo,
@@ -23,6 +24,7 @@ from app.dependencies import (
     manufacturer_repo,
     newsletter_repo,
     product_repo,
+    quote_repo
 )
 from app.services.jwt_service import JwtTokenError
 
@@ -350,6 +352,55 @@ async def delete_country(
     country_repo.delete_country(country_id)
 
     return ApiResponse(message="Country deleted successfully.")
+
+# TODO: In the future, can look into filter (filter by is_paid, amount, created_at...)
+@router.get("/quotes", response_model=QuoteListResponse)
+async def get_all_quotes(
+    token_data: dict = Depends(verify_token),
+    search: Optional[str] = "",
+    page: int = Query(1, ge=1),
+    per_page: int = Query(10, ge=1, le=100)
+) -> QuoteListResponse:
+    
+    return quote_repo.get_all_quotes(search, page, per_page)
+
+@router.get("/quote/{quote_id}", response_model=Quote)
+async def get_quote_by_id(
+    quote_id: int,
+    token_data: dict = Depends(verify_token)
+) -> Quote:
+    
+    return quote_repo.get_quote_by_id(quote_id)
+
+@router.post("/quotes", response_model=ApiResponse)
+async def add_quote(
+    quote: Quote,
+    token_data: dict = Depends(verify_token)
+) -> ApiResponse:
+    
+    quote_repo.add_quote(quote)
+
+    return ApiResponse(message="Quote added successfully.")
+
+@router.put("/quote/{quote_id}", response_model=ApiResponse)
+async def update_quote(
+    quote_id: int,
+    quote: Quote,
+    token_data: dict = Depends(verify_token)
+) -> ApiResponse:
+    
+    quote_repo.update_quote(quote_id, quote)
+    return ApiResponse(message="Quote updated successfully.")
+
+@router.delete("/quote/{quote_id}", response_model=ApiResponse)
+async def delete_quote(
+    quote_id: int,
+    token_data: dict = Depends(verify_token)
+) -> ApiResponse:
+    
+    quote_repo.delete_quote(quote_id)
+
+    return ApiResponse(message="Quote deleted successfully.")
 
 @router.post("/login")
 async def admin_login(payload: AdminLoginRequest) -> str:

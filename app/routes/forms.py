@@ -6,12 +6,13 @@ from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from pydantic import ValidationError
 
 from app.config import settings
-from app.dependencies import email_service, newsletter_repo
+from app.dependencies import email_service, newsletter_repo, quote_repo
 from app.schemas import (
     ApiResponse,
     EnquiryRequest,
     NewsletterRequest,
     QuoteRequest,
+    Quote
 )
 from app.utils.translation_util import translate_text
 from app.utils.formatter_util import format_form
@@ -44,6 +45,9 @@ async def submit_quote(payload: str = Form(...), attachment: UploadFile = File(N
         raise HTTPException(status_code=422, detail=json.loads(exc.json())) from exc
 
     ensure_digits(parsed_payload.phone, "phone number")
+
+    quote = Quote(parsed_payload)
+    quote_repo.add_quote(quote)
 
     email_service.send(
         subject=f"Enquiry by {parsed_payload.name}",

@@ -4,8 +4,7 @@ from pydantic import BaseModel, Field
 
 class ApiResponse(BaseModel):
     message: str
-
-
+    
 class EnquiryRequest(BaseModel):
     name: str = Field(..., min_length=1)
     company_name: str = Field(..., min_length=1)
@@ -13,6 +12,7 @@ class EnquiryRequest(BaseModel):
     phone: str = Field(..., min_length=5)
     email: str = Field(..., min_length=3)
     message: str = Field("", max_length=2000)
+    created_at: str
 
 class Manufacturer(BaseModel):
     id: Optional[int] = None
@@ -27,7 +27,7 @@ class ProductPreview(BaseModel):
     # image url or product page url
     image_url: Optional[str] = None
 
-# Potentially remove code?
+# Potentially remove code
 class Country(BaseModel):
     id: Optional[int] = None
     name: str
@@ -50,6 +50,16 @@ class ProductPreviewWithQuantity(ProductPreview):
 class QuoteRequest(EnquiryRequest):
     product_previews_with_quantity: List[ProductPreviewWithQuantity] = Field(..., min_items=1)
 
+class Quote(QuoteRequest):
+    id: Optional[int] = None
+    is_paid: Optional[bool] = False
+    total_amount: Optional[int] = 0
+
+class QuoteListResponse(BaseModel):
+    page: int
+    per_page: int
+    total: int
+    quotes: list[Quote] = []
 
 class NewsletterRequest(BaseModel):
     email: str = Field(..., min_length=3)
@@ -121,7 +131,7 @@ class Job(JobPreview):
     industry: str
     requirements: str
     responsibilities: str
-    description: str
+    descritpion: str
     working_hours: str
 
 class JobApplicationRequest(BaseModel):
@@ -131,3 +141,4 @@ class JobApplicationRequest(BaseModel):
     country_code: str = Field(..., min_length=1)
     phone: str = Field(..., min_length=5)
     experience: str = Field(..., min_length=1)
+

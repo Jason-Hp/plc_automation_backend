@@ -5,6 +5,7 @@ from app.repositories.country_repository import CountryRepository
 from app.repositories.faq_repository import FaqRepository
 from app.repositories.job_repository import JobRepository
 from app.repositories.maufacturer_repository import ManufacturerRepository
+from app.repositories.quote_repository import QuoteRepository
 from app.repositories.newsletter_subscribers_repository import NewsletterRepository
 from app.repositories.product_repository import ProductRepository
 from app.services.email_service import EmailService
@@ -21,6 +22,7 @@ job_repo = JobRepository()
 category_repo = CategoryRepository()
 manufacturer_repo = ManufacturerRepository()
 country_repo = CountryRepository()
+quote_repo = QuoteRepository()
 
 email_service = EmailService()
 jwt_service = JwtService()
