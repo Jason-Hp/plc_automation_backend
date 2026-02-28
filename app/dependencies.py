@@ -1,3 +1,4 @@
+from app.repositories.approval_repository import ApprovalRepository
 from app.repositories.blog_repository import BlogRepository
 from app.repositories.category_repository import CategoryRepository
 from app.repositories.contact_info_repository import ContactInfoRepository
@@ -14,6 +15,7 @@ from app.services.search_service import SearchService
 from app.services.storage_service import StorageService
 
 newsletter_repo = NewsletterRepository()
+approval_repo = ApprovalRepository()
 faq_repo = FaqRepository()
 contact_info_repo = ContactInfoRepository()
 blog_repo = BlogRepository()

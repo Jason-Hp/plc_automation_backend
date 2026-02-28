@@ -1,0 +1,67 @@
+from __future__ import annotations
+
+from typing import List, Optional
+
+from app.schemas import Approval
+
+
+class ApprovalRepository:
+    """
+    Repository for managing approval requests.
+    Placeholder using in-memory list. Replace with SQL queries against tbl_approvals.
+    """
+
+    def __init__(self) -> None:
+        self._approvals = []
+        self._id_counter = 1
+
+    def add_approval(self, approval: Approval) -> Approval:
+        """Create a new approval request."""
+        if approval.id is None:
+            approval.id = self._id_counter
+            self._id_counter += 1
+        self._approvals.append(approval)
+        return approval
+
+    def get_approval_by_id(self, approval_id: int) -> Optional[Approval]:
+        """Retrieve an approval by ID."""
+        for approval in self._approvals:
+            if approval.id == approval_id:
+                return approval
+        return None
+
+    def get_all_approvals(self) -> List[Approval]:
+        """Retrieve all approval requests."""
+        return self._approvals.copy()
+
+    def get_approvals_by_type(self, approval_type: str) -> List[Approval]:
+        """Retrieve approvals filtered by type."""
+        return [a for a in self._approvals if a.type == approval_type]
+
+    def get_approvals_by_status(self, is_approved: bool) -> List[Approval]:
+        """Retrieve approvals filtered by approval status."""
+        return [a for a in self._approvals if a.is_approved == is_approved]
+
+    def get_pending_approvals(self) -> List[Approval]:
+        """Retrieve all pending (unapproved) requests."""
+        return self.get_approvals_by_status(False)
+
+    def get_approved_approvals(self) -> List[Approval]:
+        """Retrieve all approved requests."""
+        return self.get_approvals_by_status(True)
+
+    def approve_request(self, approval_id: int) -> Optional[Approval]:
+        """Mark an approval request as approved."""
+        approval = self.get_approval_by_id(approval_id)
+        if approval:
+            approval.is_approved = True
+            return approval
+        return None
+
+    def reject_request(self, approval_id: int) -> Optional[Approval]:
+        """Reject/delete an approval request."""
+        approval = self.get_approval_by_id(approval_id)
+        if approval:
+            approval.is_approved = False
+            return approval
+        return None

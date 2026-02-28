@@ -142,3 +142,9 @@ class JobApplicationRequest(BaseModel):
     phone: str = Field(..., min_length=5)
     experience: str = Field(..., min_length=1)
 
+class Approval(BaseModel):
+    id: Optional[int] = None
+    type: str
+    payload: str
+    is_approved: bool
+    request_date: str  # DD - MM - YYYY

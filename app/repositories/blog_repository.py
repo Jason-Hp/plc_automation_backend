@@ -1,13 +1,11 @@
 from __future__ import annotations
 
-from typing import List
-
 from app.schemas import Blog, BlogPreview, BlogPreviewListResponse, BlogRequest
 
 
 class BlogRepository:
     def __init__(self):
-        self._blogs: List[Blog] = []
+        self._blogs: list[Blog] = []
 
     def get_blog_previews(self, request: BlogRequest, page: int, per_page: int) -> BlogPreviewListResponse:
         filtered = self._blogs
@@ -32,7 +30,7 @@ class BlogRepository:
         start = (page - 1) * per_page
         end = start + per_page
 
-        previews: List[BlogPreview] = [
+        previews: list[BlogPreview] = [
             BlogPreview(
                 id=blog.id,
                 title=blog.title,
