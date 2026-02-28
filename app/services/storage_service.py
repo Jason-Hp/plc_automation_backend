@@ -4,6 +4,7 @@ from pathlib import Path
 
 from app.config import settings
 
+#TODO: This need to be refactored to use S3 instead of Local
 
 class StorageService:
     def __init__(self) -> None:
