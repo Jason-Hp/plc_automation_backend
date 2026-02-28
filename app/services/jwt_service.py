@@ -15,7 +15,7 @@ class JwtService:
         self.algorithm = settings.jwt_algorithm
         self.expiration_hours = settings.jwt_expiration_hours
 
-    def create_jwt_token(self, username: str = "admin") -> str:
+    def create_jwt_token(self, username: str) -> str:
         now = datetime.now(timezone.utc)
         payload = {
             "sub": username,

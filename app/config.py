@@ -32,9 +32,16 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     jwt_expiration_hours: int = 3
 
-    # Admin credentials (TODO: CHANGE IN PRODUCTION ENV)
+    # Admin is the only approver (REFACTOR ACCOUNTS TO BE STORED IN DB INSTEAD)
     admin_username: str = "admin"
     admin_password: str = "password"
+
+    # Updater accounts
+    updater_1_username: str = "updater1"
+    updater_1_password: str = "password1"
+
+    updater_2_username: str = "updater2"
+    updater_2_password: str = "password2"
 
     upload_dir: str = str(UPLOAD_DIR)
     database_url: str = ""
@@ -42,6 +49,7 @@ class Settings(BaseSettings):
     warn_log_location: str = str(LOG_DIR / "warn_logs")
     error_log_location: str = str(LOG_DIR / "error_logs")
     enquiry_log_location: str = str(LOG_DIR / "enquiry_logs")
+    admin_log_location: str = str(LOG_DIR / "admin_logs")
 
     model_config = SettingsConfigDict(env_file=".env", env_prefix="", case_sensitive=False)
 

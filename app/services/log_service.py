@@ -8,9 +8,10 @@ import os
 
 class LogService(Enum):
     WEB = (settings.web_log_location, "web_log")
-    WARN = (settings.error_log_location, "warn_log")
+    WARN = (settings.warn_log_location, "warn_log")
     ERROR = (settings.error_log_location, "error_log")
     ENQUIRY = (settings.enquiry_log_location, "enquiry_log")
+    ADMIN = (settings.admin_log_location, "admin_log")
 
     def __init__(self, location: str, prefix: str):
         self.location = location

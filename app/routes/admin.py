@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 import csv
+import datetime
 import io
 import json
+from pathlib import Path
 from typing import Optional
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status, Query
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.responses import FileResponse
 
 from pydantic import ValidationError
 
@@ -402,12 +405,43 @@ async def delete_quote(
 
     return ApiResponse(message="Quote deleted successfully.")
 
+# This is a download
+@router.get("/admin_logs")
+async def get_admin_logs(date: str = None, token_data: dict = Depends(verify_token)):
+    current_sub = token_data.get("sub")
+    if current_sub != settings.admin_username:
+        raise HTTPException(status_code=403, detail="Only admin can access logs.")
+    if not date:
+        date = datetime.datetime.now().strftime("%Y-%m-%d")
+    
+    log_file_path = Path(settings.admin_log_location) / f"{date}.log"
+    
+    if not log_file_path.exists():
+        raise HTTPException(status_code=404, detail=f"Log file for {date} not found.")
+    
+    return FileResponse(
+        path=log_file_path,
+        filename=f"admin_logs_{date}.log",
+        media_type="text/plain"
+    )
+
+
+
+
 @router.post("/login")
 async def admin_login(payload: AdminLoginRequest) -> str:
-    # TODO: return jwt token 3 hour expiry (need to change how password is accessed here for sec reasons)
-    if payload.username == settings.admin_username and payload.password == settings.admin_password:
-        jwt_token = jwt_service.create_jwt_token(payload.username)
-        return jwt_token
-    else:
-        raise HTTPException(status_code=401, detail="Invalid credentials")
+
+    # TODO: return jwt token 3 hour expiry (need to refactor/change how password is accessed here for sec reasons)
+    match (payload.username, payload.password):
+        case (settings.admin_username, settings.admin_password):
+            jwt_token = jwt_service.create_jwt_token(payload.username)
+            return jwt_token
+        case (settings.updater_1_username, settings.updater_1_password):
+            jwt_token = jwt_service.create_jwt_token(payload.username)
+            return jwt_token
+        case (settings.updater_2_username, settings.updater_2_password):
+            jwt_token = jwt_service.create_jwt_token(payload.username)
+            return jwt_token
+        case _:
+            raise HTTPException(status_code=401, detail="Invalid credentials")
 
