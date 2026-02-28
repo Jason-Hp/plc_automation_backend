@@ -147,8 +147,8 @@ class Approval(BaseModel):
     type: str
     payload: str
     is_approved: bool
-    requester: str
-    request_date: str  # DD - MM - YYYY
+    requester: Optional[str] = None
+    request_date: Optional[str] = None  # DD - MM - YYYY
 
 class ApprovalResponse(BaseModel):
     page: int

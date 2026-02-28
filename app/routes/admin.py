@@ -445,6 +445,17 @@ async def get_all_approvals(
         is_approved=is_approved
     )
 
+@router.post("/approvals", response_model=ApiResponse)
+async def add_approval(
+    approval: Approval,
+    token_data: dict = Depends(verify_token)
+) -> ApiResponse:
+    sub = token_data.get("sub")
+    approval.requester = sub
+    approval.request_date = datetime.datetime.now().strftime("%Y-%m-%d")
+    approval_repo.add_approval(approval)
+    return ApiResponse(message="Approval added successfully.")
+
 @router.delete("/approvals/{approval_id}", response_model=ApiResponse)
 async def delete_approval(
     approval_id: int,
