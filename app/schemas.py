@@ -131,7 +131,7 @@ class Job(JobPreview):
     industry: str
     requirements: str
     responsibilities: str
-    descritpion: str
+    description: str
     working_hours: str
 
 class JobApplicationRequest(BaseModel):
