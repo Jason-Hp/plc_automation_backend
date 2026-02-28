@@ -1,5 +1,6 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pathlib import Path
+from typing import Optional
 
 # Get project root directory
 CONFIG_DIR = Path(__file__).parent  # app/
@@ -50,6 +51,12 @@ class Settings(BaseSettings):
     error_log_location: str = str(LOG_DIR / "error_logs")
     enquiry_log_location: str = str(LOG_DIR / "enquiry_logs")
     admin_log_location: str = str(LOG_DIR / "admin_logs")
+
+    # AWS S3 configuration (if provided, StorageService will use S3)
+    aws_access_key_id: Optional[str] = None
+    aws_secret_access_key: Optional[str] = None
+    aws_s3_bucket: Optional[str] = None
+    aws_region: Optional[str] = None
 
     model_config = SettingsConfigDict(env_file=".env", env_prefix="", case_sensitive=False)
 

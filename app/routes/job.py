@@ -4,7 +4,7 @@ from fastapi import APIRouter, UploadFile, File, HTTPException, Form
 from pydantic import ValidationError
 
 from app.schemas import ApiResponse, Job, JobApplicationRequest, JobPreview
-from app.dependencies import email_service, job_repo, storage_service
+from app.dependencies import email_service, job_repo
 from app.utils.translation_util import translate_text
 from app.config import settings
 from app.utils.formatter_util import format_form
@@ -48,7 +48,6 @@ async def submit_job_application(
         raise HTTPException(status_code=404, detail="Job not found")
 
     resume_bytes = await resume.read()
-    storage_service.save_upload(resume.filename, resume_bytes)
 
     email_service.send(
         subject=f"Apply for [{job.title}]",
