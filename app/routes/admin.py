@@ -15,6 +15,7 @@ from pydantic import ValidationError
 
 from app.schemas import ApprovalResponse, Approval, QuoteListResponse, Quote, Country, Manufacturer, Category, Job, Product, Blog, BatchProductUploadResult, AdminLoginRequest, ApiResponse, NewsLetterContentRequest, FAQ, ContactInfo
 from app.config import Settings
+from app.services.log_service import LogService
 from app.dependencies import (
     blog_repo,
     category_repo,
@@ -453,6 +454,7 @@ async def add_approval(
     sub = token_data.get("sub")
     approval.requester = sub
     approval.request_date = datetime.datetime.now().strftime("%Y-%m-%d")
+    LogService.ADMIN.log(f"New approval request added by {sub}: {approval.model_dump_json()}")
     approval_repo.add_approval(approval)
     return ApiResponse(message="Approval added successfully.")
 
@@ -464,6 +466,7 @@ async def delete_approval(
     sub = token_data.get("sub")
     success = approval_repo.delete_approval(approval_id, deleter=sub)
     if success:
+        LogService.ADMIN.log(f"Approval request {approval_id} deleted by {sub}")
         return ApiResponse(message="Approval deleted successfully.")
     else:
         raise HTTPException(status_code=404, detail="Approval not found.")
@@ -478,6 +481,7 @@ async def approve_approval(
         raise HTTPException(status_code=403, detail="Only admin can approve requests.")
     approval = approval_repo.approve_request(approval_id)
     if approval:
+        LogService.ADMIN.log(f"Approval request {approval_id} approved by {sub}")
         return ApiResponse(message="Approval approved successfully.")
     else:
         raise HTTPException(status_code=404, detail="Approval not found.")
@@ -492,6 +496,7 @@ async def reject_approval(
         raise HTTPException(status_code=403, detail="Only admin can approve requests.")
     approval = approval_repo.reject_request(approval_id)
     if approval:
+        LogService.ADMIN.log(f"Approval request {approval_id} rejected by {sub}")
         return ApiResponse(message="Approval rejected successfully.")
     else:
         raise HTTPException(status_code=404, detail="Approval not found.")
