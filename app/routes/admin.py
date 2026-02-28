@@ -76,13 +76,8 @@ async def upload_offer_products(
 async def upload_product(
     product: Product,
     country_ids: list[int],
-    product_image: Optional[UploadFile] = File(None),
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
-    
-    if product_image:
-        image_url = storage_service.save_upload(await product_image.read(), original_filename=product_image.filename)
-        product.image_url = image_url
 
     product_repo.add_product(product)
     country_repo.add_product_availability_for_country(country_ids, product.id)
@@ -93,12 +88,8 @@ async def update_product(
     product_id: int,
     product: Product,
     country_ids: list[int],
-    product_image: Optional[UploadFile] = File(None),
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
-    if product_image:
-        image_url = storage_service.save_upload(await product_image.read(), original_filename=product_image.filename)
-        product.image_url = image_url
 
     product_repo.update_product(product_id, product)
     country_repo.update_product_availability_for_country(country_ids, product.id)
@@ -215,13 +206,8 @@ async def delete_contact_info(
 async def upload_blog(
     blog: Blog,
     categories: list[Category],
-    blog_image: Optional[UploadFile] = File(None),
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
-    
-    if blog_image:
-        image_url = storage_service.save_upload(await blog_image.read(), original_filename=blog_image.filename)
-        blog.image_url = image_url
 
     blog = blog_repo.add_blog(blog)
     category_repo.add_categories_to_blog(blog.id, categories)
@@ -232,14 +218,9 @@ async def update_blog(
     blog_id: int,
     blog: Blog,
     categories: list[Category],
-    blog_image: Optional[UploadFile] = File(None),
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     
-    if blog_image:
-        image_url = storage_service.save_upload(await blog_image.read(), original_filename=blog_image.filename)
-        blog.image_url = image_url
-        
     blog_repo.update_blog(blog_id, blog)
     category_repo.update_categories_of_blog(blog_id, categories)
 
@@ -471,11 +452,15 @@ async def get_all_approvals(
 @router.post("/approvals", response_model=ApiResponse)
 async def add_approval(
     approval: Approval,
+    attachment: Optional[UploadFile] = File(None),
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     sub = token_data.get("sub")
     approval.requester = sub
     approval.request_date = datetime.datetime.now().strftime("%Y-%m-%d")
+    if attachment:
+        attachment_url = storage_service.save_upload(await attachment.read(), original_filename=attachment.filename)
+        approval.attachment_url = attachment_url
     LogService.ADMIN.log(f"New approval request added by {sub}: {approval.model_dump_json()}")
     approval_repo.add_approval(approval)
     return ApiResponse(message="Approval added successfully.")

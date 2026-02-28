@@ -149,6 +149,7 @@ class Approval(BaseModel):
     is_approved: bool
     requester: Optional[str] = None
     request_date: Optional[str] = None  # DD - MM - YYYY
+    attachment_url: Optional[str] = None
 
 class ApprovalResponse(BaseModel):
     page: int
