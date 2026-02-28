@@ -1601,7 +1601,7 @@ All endpoints below are under `/api`.
   "approvals": [
     {
       "id": 1,
-      "type": "product_update",
+      "type": "UPDATE-Product",
       "payload": "{\"product_id\": 1, \"field\": \"price\", \"new_value\": 500}",
       "is_approved": false,
       "requester": "updater_1",
@@ -1625,7 +1625,7 @@ All endpoints below are under `/api`.
 **Request body (application/json)**
 ```json
 {
-  "type": "product_update",
+  "type": "ADD_Product",
   "payload": "{\"product_id\": 1, \"field\": \"price\", \"new_value\": 500}",
   "is_approved": false,
   "requester": "(auto-filled from token)",
@@ -1712,11 +1712,3 @@ All endpoints below are under `/api`.
 
 ---
 
-## Quote repository mock behavior
-
-`QuoteRepository` is currently implemented as an in-memory mock with:
-
-- a **quote table** (`_quote_table`) for quote entity fields
-- a **quote-products join table** (`_quote_products_table`) for `quote_id`, `product_id`, and `quantity`
-
-This mock supports add/get/list/update/delete flows and keeps product quantities in the join table layer.
