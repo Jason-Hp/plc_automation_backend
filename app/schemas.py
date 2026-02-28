@@ -147,4 +147,11 @@ class Approval(BaseModel):
     type: str
     payload: str
     is_approved: bool
+    requester: str
     request_date: str  # DD - MM - YYYY
+
+class ApprovalResponse(BaseModel):
+    page: int
+    per_page: int
+    total: int
+    approvals: list[Approval] = []

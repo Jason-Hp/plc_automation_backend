@@ -13,7 +13,7 @@ from fastapi.responses import FileResponse
 
 from pydantic import ValidationError
 
-from app.schemas import QuoteListResponse, Quote, Country, Manufacturer, Category, Job, Product, Blog, BatchProductUploadResult, AdminLoginRequest, ApiResponse, NewsLetterContentRequest, FAQ, ContactInfo
+from app.schemas import ApprovalResponse, Approval, QuoteListResponse, Quote, Country, Manufacturer, Category, Job, Product, Blog, BatchProductUploadResult, AdminLoginRequest, ApiResponse, NewsLetterContentRequest, FAQ, ContactInfo
 from app.config import Settings
 from app.dependencies import (
     blog_repo,
@@ -27,7 +27,8 @@ from app.dependencies import (
     manufacturer_repo,
     newsletter_repo,
     product_repo,
-    quote_repo
+    quote_repo,
+    approval_repo
 )
 from app.services.jwt_service import JwtTokenError
 
@@ -425,7 +426,65 @@ async def get_admin_logs(date: str = None, token_data: dict = Depends(verify_tok
         media_type="text/plain"
     )
 
+@router.get("/approvals", response_model=ApprovalResponse)
+async def get_all_approvals(
+    token_data: dict = Depends(verify_token),
+    approval_id: Optional[int] = None,
+    approval_type: Optional[str] = None,
+    is_approved: Optional[bool] = None,
+    page: int = Query(1, ge=1),
+    per_page: int = Query(10, ge=1, le=100)
+) -> ApprovalResponse:
+    sub = token_data.get("sub")
+    if sub != settings.admin_username:
+        # For non-admin users, only return their own requests
+        return approval_repo.get_approvals(approval_id=approval_id, approval_type=approval_type, is_approved=is_approved, requester=sub)
+    return approval_repo.get_approvals(
+        approval_id=approval_id,
+        approval_type=approval_type,
+        is_approved=is_approved
+    )
 
+@router.delete("/approvals/{approval_id}", response_model=ApiResponse)
+async def delete_approval(
+    approval_id: int,
+    token_data: dict = Depends(verify_token)
+) -> ApiResponse:
+    sub = token_data.get("sub")
+    success = approval_repo.delete_approval(approval_id, deleter=sub)
+    if success:
+        return ApiResponse(message="Approval deleted successfully.")
+    else:
+        raise HTTPException(status_code=404, detail="Approval not found.")
+
+@router.put("/approvals/{approval_id}/approve", response_model=ApiResponse)
+async def approve_approval(
+    approval_id: int,
+    token_data: dict = Depends(verify_token)
+) -> ApiResponse:
+    sub = token_data.get("sub")
+    if sub != settings.admin_username:
+        raise HTTPException(status_code=403, detail="Only admin can approve requests.")
+    approval = approval_repo.approve_request(approval_id)
+    if approval:
+        return ApiResponse(message="Approval approved successfully.")
+    else:
+        raise HTTPException(status_code=404, detail="Approval not found.")
+
+@router.put("/approvals/{approval_id}/reject", response_model=ApiResponse)
+async def reject_approval(
+    approval_id: int,
+    token_data: dict = Depends(verify_token)
+) -> ApiResponse:
+    sub = token_data.get("sub")
+    if sub != settings.admin_username:
+        raise HTTPException(status_code=403, detail="Only admin can approve requests.")
+    approval = approval_repo.reject_request(approval_id)
+    if approval:
+        return ApiResponse(message="Approval rejected successfully.")
+    else:
+        raise HTTPException(status_code=404, detail="Approval not found.")
+    
 
 
 @router.post("/login")
