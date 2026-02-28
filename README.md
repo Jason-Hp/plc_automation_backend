@@ -557,7 +557,7 @@ All endpoints below are under `/api`.
   "industry": "Automation",
   "requirements": "...",
   "responsibilities": "...",
-  "description": "...",
+  "descritpion": "...",
   "working_hours": "Mon-Fri 9AM-6PM"
 }
 ```
@@ -664,6 +664,9 @@ All endpoints below are under `/api`.
 }
 ```
 
+**Query params**
+- `country_ids` (required, repeatable integer values)
+
 **Request body (application/json)**
 ```json
 {
@@ -696,6 +699,9 @@ All endpoints below are under `/api`.
   "Authorization": "Bearer <token>"
 }
 ```
+
+**Query params**
+- `country_ids` (required, repeatable integer values)
 
 **Request body (application/json)**
 ```json
@@ -937,19 +943,27 @@ All endpoints below are under `/api`.
 **Request body (application/json)**
 ```json
 {
-  "id": 1,
-  "title": "How to select a PLC",
+  "blog": {
+    "id": 1,
+    "title": "How to select a PLC",
+    "categories": [
+      {
+        "id": 1,
+        "name": "Guide"
+      }
+    ],
+    "image_url": "https://cdn.example.com/blog.jpg",
+    "published_by": "PLC Automation",
+    "created_at": "01-01-2025",
+    "updated_at": "01-01-2025",
+    "content": "Long article body"
+  },
   "categories": [
     {
       "id": 1,
       "name": "Guide"
     }
-  ],
-  "image_url": "https://cdn.example.com/blog.jpg",
-  "published_by": "PLC Automation",
-  "created_at": "01-01-2025",
-  "updated_at": "01-01-2025",
-  "content": "Long article body"
+  ]
 }
 ```
 
@@ -973,19 +987,27 @@ All endpoints below are under `/api`.
 **Request body (application/json)**
 ```json
 {
-  "id": 1,
-  "title": "How to select a PLC",
+  "blog": {
+    "id": 1,
+    "title": "How to select a PLC",
+    "categories": [
+      {
+        "id": 1,
+        "name": "Guide"
+      }
+    ],
+    "image_url": "https://cdn.example.com/blog.jpg",
+    "published_by": "PLC Automation",
+    "created_at": "01-01-2025",
+    "updated_at": "01-01-2025",
+    "content": "Long article body"
+  },
   "categories": [
     {
       "id": 1,
       "name": "Guide"
     }
-  ],
-  "image_url": "https://cdn.example.com/blog.jpg",
-  "published_by": "PLC Automation",
-  "created_at": "01-01-2025",
-  "updated_at": "01-01-2025",
-  "content": "Long article body"
+  ]
 }
 ```
 
@@ -1039,7 +1061,7 @@ All endpoints below are under `/api`.
   "industry": "Automation",
   "requirements": "...",
   "responsibilities": "...",
-  "description": "...",
+  "descritpion": "...",
   "working_hours": "Mon-Fri 9AM-6PM"
 }
 ```
@@ -1072,7 +1094,7 @@ All endpoints below are under `/api`.
   "industry": "Automation",
   "requirements": "...",
   "responsibilities": "...",
-  "description": "...",
+  "descritpion": "...",
   "working_hours": "Mon-Fri 9AM-6PM"
 }
 ```
@@ -1520,6 +1542,171 @@ All endpoints below are under `/api`.
 ```json
 {
   "message": "Quote deleted successfully."
+}
+```
+
+### GET `/api/admin/admin_logs?date=<optional: YYYY-MM-DD>`
+**Headers**
+```json
+{
+  "lang": "en (optional)",
+  "country": "SG (optional)",
+  "Authorization": "Bearer <token>"
+}
+```
+
+**Request body**
+```json
+{}
+```
+
+**Response 200**
+- Downloads `admin_logs_<date>.log`
+
+**Response 403**
+```json
+{
+  "detail": "Only admin can access logs."
+}
+```
+
+**Response 404**
+```json
+{
+  "detail": "Log file for <date> not found."
+}
+```
+
+### GET `/api/admin/approvals?approval_id=<optional>&approval_type=<optional>&is_approved=<optional>&page=1&per_page=10`
+**Headers**
+```json
+{
+  "lang": "en (optional)",
+  "country": "SG (optional)",
+  "Authorization": "Bearer <token>"
+}
+```
+
+**Request body**
+```json
+{}
+```
+
+**Response 200**
+```json
+{
+  "page": 1,
+  "per_page": 10,
+  "total": 1,
+  "approvals": [
+    {
+      "id": 1,
+      "type": "product_update",
+      "payload": "{\"product_id\": 1, \"field\": \"price\", \"new_value\": 500}",
+      "is_approved": false,
+      "requester": "updater_1",
+      "request_date": "2026-01-01",
+      "attachment_url": "https://cdn.example.com/uploads/change.pdf"
+    }
+  ]
+}
+```
+
+### POST `/api/admin/approvals`
+**Headers**
+```json
+{
+  "lang": "en (optional)",
+  "country": "SG (optional)",
+  "Authorization": "Bearer <token>"
+}
+```
+
+**Request body (application/json)**
+```json
+{
+  "type": "product_update",
+  "payload": "{\"product_id\": 1, \"field\": \"price\", \"new_value\": 500}",
+  "is_approved": false,
+  "requester": "(auto-filled from token)",
+  "request_date": "(auto-filled by server)",
+  "attachment_url": "(auto-filled when attachment is saved)"
+}
+```
+
+**Optional attachment**
+- `attachment` (file)
+
+**Response 200**
+```json
+{
+  "message": "Approval added successfully."
+}
+```
+
+### DELETE `/api/admin/approvals/{approval_id}`
+**Headers**
+```json
+{
+  "lang": "en (optional)",
+  "country": "SG (optional)",
+  "Authorization": "Bearer <token>"
+}
+```
+
+**Request body**
+```json
+{}
+```
+
+**Response 200**
+```json
+{
+  "message": "Approval deleted successfully."
+}
+```
+
+### PUT `/api/admin/approvals/{approval_id}/approve`
+**Headers**
+```json
+{
+  "lang": "en (optional)",
+  "country": "SG (optional)",
+  "Authorization": "Bearer <token>"
+}
+```
+
+**Request body**
+```json
+{}
+```
+
+**Response 200**
+```json
+{
+  "message": "Approval approved successfully."
+}
+```
+
+### PUT `/api/admin/approvals/{approval_id}/reject`
+**Headers**
+```json
+{
+  "lang": "en (optional)",
+  "country": "SG (optional)",
+  "Authorization": "Bearer <token>"
+}
+```
+
+**Request body**
+```json
+{}
+```
+
+**Response 200**
+```json
+{
+  "message": "Approval rejected successfully."
 }
 ```
 

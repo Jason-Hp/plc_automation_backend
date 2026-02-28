@@ -80,6 +80,9 @@ class ApprovalRepository:
         
         if approval_type is not None:
             results = [a for a in results if a.type == approval_type]
+
+        if is_approved is not None:
+            results = [a for a in results if a.is_approved == is_approved]
         
         start = (page - 1) * per_page
         end = start + per_page
