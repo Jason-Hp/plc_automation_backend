@@ -57,6 +57,7 @@ class Settings(BaseSettings):
     aws_secret_access_key: Optional[str] = None
     aws_s3_bucket: Optional[str] = None
     aws_region: Optional[str] = None
+    aws_cloudfront_domain: Optional[str] = None
 
     model_config = SettingsConfigDict(env_file=".env", env_prefix="", case_sensitive=False)
 
