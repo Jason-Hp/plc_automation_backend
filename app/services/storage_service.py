@@ -72,6 +72,4 @@ class StorageService:
                 region = settings.aws_region or "us-east-1"
                 return f"https://{self.s3_bucket}.s3.{region}.amazonaws.com/{key}"
         else:
-            destination = self.upload_dir / key
-            destination.write_bytes(payload)
-            return str(destination)
+            raise NotImplementedError("Please configure AWS S3 credentials and bucket to enable storage.")
