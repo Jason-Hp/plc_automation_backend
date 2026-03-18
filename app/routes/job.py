@@ -29,7 +29,7 @@ async def get_job_posting(job_id: int) -> Job:
     job.responsibilities = translate_text(job.responsibilities)
     return job
 
-
+#DEPRECATED: Might be handled entirely on the frontend
 @router.post("/{job_id}/application", response_model=ApiResponse)
 async def submit_job_application(
     job_id: int,

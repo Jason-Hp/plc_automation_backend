@@ -18,17 +18,14 @@ class StorageService:
     def __init__(self) -> None:
         self.use_s3 = False
         self.s3_client = None  # type: ignore
-        self.s3_bucket = None  # type: ignore
         self.cloudfront_domain = None  # type: ignore
 
         if (
-            settings.aws_s3_bucket
-            and settings.aws_access_key_id
+            settings.aws_access_key_id
             and settings.aws_secret_access_key
         ):
             # initialise S3 client
             self.use_s3 = True
-            self.s3_bucket = settings.aws_s3_bucket
             self.cloudfront_domain = settings.aws_cloudfront_domain
             self.s3_client = boto3.client(
                 "s3",
@@ -42,6 +39,7 @@ class StorageService:
 
     def save_upload(
         self,
+        bucket: str,
         payload: bytes,
         original_filename: Optional[str] = None,
     ) -> str:
@@ -51,17 +49,14 @@ class StorageService:
         * When S3 is enabled but CloudFront is not configured, the result is the S3 HTTPS URL.
         * When falling back to local disk the result is the local path string.
 
-        ``original_filename`` is only used to preserve an extension if present.
+
         """
-        # generate a unique name (uuid4) and optionally keep extension
-        ext = ""
-        if original_filename:
-            ext = Path(original_filename).suffix
-        key = f"{uuid.uuid4()}{ext}"
+
+        key = f"{uuid.uuid4()}-{original_filename or 'DEFAULT'}"
 
         if self.use_s3:
             try:
-                self.s3_client.put_object(Bucket=self.s3_bucket, Key=key, Body=payload)
+                self.s3_client.put_object(Bucket=bucket, Key=key, Body=payload)
             except (BotoCoreError, ClientError) as exc:
                 # bubble up the exception to caller
                 raise
@@ -70,6 +65,6 @@ class StorageService:
                 return f"https://{self.cloudfront_domain}/{key}"
             else:
                 region = settings.aws_region or "us-east-1"
-                return f"https://{self.s3_bucket}.s3.{region}.amazonaws.com/{key}"
+                return f"https://{bucket}.s3.{region}.amazonaws.com/{key}"
         else:
             raise NotImplementedError("Please configure AWS S3 credentials and bucket to enable storage.")

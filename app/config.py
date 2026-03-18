@@ -43,9 +43,10 @@ class Settings(BaseSettings):
     # AWS S3 configuration (if provided, StorageService will use S3)
     aws_access_key_id: Optional[str] = None
     aws_secret_access_key: Optional[str] = None
-    aws_s3_bucket: Optional[str] = None
     aws_region: Optional[str] = None
     aws_cloudfront_domain: Optional[str] = None
+    aws_s3_blob_bucket: Optional[str] = None
+    aws_s3_log_bucket: Optional[str] = None
 
     # Supabase configuration (used for auth and semantic search)
     supabase_url: str = ""

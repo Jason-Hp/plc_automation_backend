@@ -502,7 +502,7 @@ async def add_approval(
     approval.requester = email
     approval.request_date = datetime.datetime.now().strftime("%Y-%m-%d")
     if attachment:
-        attachment_url = storage_service.save_upload(await attachment.read(), original_filename=attachment.filename)
+        attachment_url = storage_service.save_upload(settings.aws_s3_blob_bucket, await attachment.read(), original_filename=attachment.filename)
         approval.attachment_url = attachment_url
     LogService.ADMIN.log(f"New approval request added by {email}: {approval.model_dump_json()}")
     approval_repo.add_approval(approval)
