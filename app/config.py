@@ -35,10 +35,9 @@ class Settings(BaseSettings):
     upload_dir: str = str(UPLOAD_DIR)
     database_url: str = ""
     web_log_location: str = str(LOG_DIR / "web_logs")
-    warn_log_location: str = str(LOG_DIR / "warn_logs")
     error_log_location: str = str(LOG_DIR / "error_logs")
-    enquiry_log_location: str = str(LOG_DIR / "enquiry_logs")
     admin_log_location: str = str(LOG_DIR / "admin_logs")
+    debug_log_location: str = str(LOG_DIR / "debug_logs")
 
     # AWS S3 configuration (if provided, StorageService will use S3)
     aws_access_key_id: Optional[str] = None
@@ -52,6 +51,9 @@ class Settings(BaseSettings):
     supabase_url: str = ""
     supabase_key: str = ""
     supabase_jwt_audience: Optional[str] = None
+
+    # Timezone configuration
+    timezone: str = "Asia/Singapore"
 
     model_config = SettingsConfigDict(env_file=".env", env_prefix="", case_sensitive=False)
 

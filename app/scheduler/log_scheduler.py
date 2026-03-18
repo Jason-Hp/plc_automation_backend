@@ -1,0 +1,42 @@
+from datetime import datetime, timedelta
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.cron import CronTrigger
+import pytz
+from app.config import settings
+import os
+
+from app.dependencies import storage_service
+from app.services.log_service import LogService
+
+def upload_logs_to_s3_and_clear_local():
+    log_locations = LogService.get_all_log_locations()
+    for log_type, location in log_locations.items():
+        # get previous day in SGT (UTC+8)
+        sgt = pytz.timezone(settings.timezone)
+        previous_day = datetime.now(sgt) - timedelta(days=1)
+        date_str = previous_day.strftime("%Y-%m-%d")
+        log_file = os.path.join(location, f"{log_type}_{date_str}.log")
+        
+        if os.path.isfile(log_file):
+            with open(log_file, "rb") as f:
+                payload = f.read()
+                storage_service.save_upload_private(
+                    bucket=settings.aws_s3_log_bucket,
+                    payload=payload,
+                    original_filename=f"{log_type}_{date_str}.log"
+                )
+                
+            # Clear local log after uploading
+            os.remove(log_file)
+
+# Start the background scheduler to run the log upload task daily
+def start_log_scheduler():
+    scheduled_worker = BackgroundScheduler()
+
+    # 1 AM in SGT (UTC+8) is 5 PM UTC the previous day
+    hour = 17  # 5 PM UTC
+
+    # Scheduled at 1 AM SGT every day to upload logs to S3 and clear local logs
+    trigger = CronTrigger(hour=hour, minute=0)  
+    scheduled_worker.add_job(upload_logs_to_s3_and_clear_local, trigger)
+    scheduled_worker.start()

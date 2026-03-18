@@ -4,6 +4,7 @@ from app.middlewares.logging_middleware import LoggingMiddleware
 from app.middlewares.context_middleware import ContextMiddleware
 from app.config import settings
 from app.routes import admin, forms, infos, products, blogs, search, job
+from app.scheduler.log_scheduler import start_log_scheduler
 
 app = FastAPI(title=settings.app_name)
 
@@ -32,6 +33,8 @@ app.include_router(infos.router, prefix="/api")
 app.include_router(blogs.router, prefix="/api")
 app.include_router(search.router, prefix="/api")
 app.include_router(job.router, prefix="/api")
+
+start_log_scheduler()
 
 @app.get("/api/health")
 async def health_check() -> dict[str, str]:

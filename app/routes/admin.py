@@ -9,7 +9,7 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status, Query
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, RedirectResponse
 
 from pydantic import ValidationError
 
@@ -455,23 +455,45 @@ async def delete_quote(
     return ApiResponse(message="Quote deleted successfully.")
 
 # This is a download
-@router.get("/admin_logs")
-async def get_admin_logs(date: str = None, token_data: dict = Depends(verify_token)):
+@router.get("/log/{log_type}")
+async def get_admin_logs(log_type: str, 
+                         date: str = Query(None, description="Date in YYYY-MM-DD format. If not provided, defaults to today's logs."), 
+                         token_data: dict = Depends(verify_token)):
     is_admin(token_data)
     if not date:
         date = datetime.datetime.now().strftime("%Y-%m-%d")
     
-    log_file_path = Path(settings.admin_log_location) / f"{date}.log"
-    
-    if not log_file_path.exists():
-        raise HTTPException(status_code=404, detail=f"Log file for {date} not found.")
-    
-    return FileResponse(
-        path=log_file_path,
-        filename=f"admin_logs_{date}.log",
-        media_type="text/plain"
-    )
+    # For logs today, we can return the file directly from the local disk (which is being written to in real-time), for past logs we can fetch from S3
+    if date == datetime.datetime.now().strftime("%Y-%m-%d"):
 
+        log_file_path = Path(settings.admin_log_location) / f"{date}.log"
+        
+        if not log_file_path.exists():
+            raise HTTPException(status_code=404, detail=f"Log file for {date} not found.")
+        
+        return FileResponse(
+            path=log_file_path,
+            filename=f"admin_logs_{date}.log",
+            media_type="text/plain"
+        )
+    # Get from S3 for past logs
+    else:
+        try:
+            log_enum = LogService.get_log_enum(log_type)
+
+            key = f"{log_enum.prefix}_{date}.log"
+            log_content_url = storage_service.get_object_url(settings.aws_s3_log_bucket, key)
+
+            # Force download by adding response-content-disposition parameter
+            download_url = f"{log_content_url}&response-content-disposition=attachment%3B%20filename%3D{log_enum.prefix}_{date}.log"
+
+            return RedirectResponse(url=download_url, status_code=302)
+
+        except Exception as exc:
+            raise HTTPException(status_code=404, detail=f"Log file for {date} not found.") from exc
+
+
+#TODO PAGES AFTER
 @router.get("/approvals", response_model=ApprovalResponse)
 async def get_all_approvals(
     token_data: dict = Depends(verify_token),
@@ -502,7 +524,7 @@ async def add_approval(
     approval.requester = email
     approval.request_date = datetime.datetime.now().strftime("%Y-%m-%d")
     if attachment:
-        attachment_url = storage_service.save_upload(settings.aws_s3_blob_bucket, await attachment.read(), original_filename=attachment.filename)
+        attachment_url = storage_service.save_upload_public(settings.aws_s3_blob_bucket, await attachment.read(), original_filename=attachment.filename)
         approval.attachment_url = attachment_url
     LogService.ADMIN.log(f"New approval request added by {email}: {approval.model_dump_json()}")
     approval_repo.add_approval(approval)

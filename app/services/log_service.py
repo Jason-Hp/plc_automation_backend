@@ -1,18 +1,18 @@
 from app.config import settings
-from datetime import datetime
+from datetime import datetime, timedelta
 from enum import Enum
 from app.dependencies import storage_service
 import os
+import pytz
 
 #TODO: Not a must, but consider either integrating with a actual logging library and moving
 # this file to utils
 
 class LogService(Enum):
-    WEB = (settings.web_log_location, "web_log")
-    WARN = (settings.warn_log_location, "warn_log")
-    ERROR = (settings.error_log_location, "error_log")
-    ENQUIRY = (settings.enquiry_log_location, "enquiry_log")
-    ADMIN = (settings.admin_log_location, "admin_log")
+    WEB = (settings.web_log_location, "web")
+    ERROR = (settings.error_log_location, "error")
+    ADMIN = (settings.admin_log_location, "admin")
+    DEBUG = (settings.debug_log_location, "debug")
 
     def __init__(self, location: str, prefix: str):
         self.location = location
@@ -32,9 +32,21 @@ class LogService(Enum):
         return log_file
 
     def log(self, message: str, level: str = "INFO") -> None:
+        
         level = level.upper()
         log_file = self.get_log_file()
         current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         formatted_message = f"[{level}] [{current_time}]: {message}\n"
+
         with open(log_file, "a", encoding="utf-8") as f:
             f.write(formatted_message)
+    
+    def get_log_enum(log_type: str):
+        for log_enum in LogService:
+            if log_enum.prefix == log_type:
+                return log_enum
+        return LogService.WEB  # default to WEB if not found
+    
+    def get_all_log_locations():
+        return {log_enum.prefix: log_enum.location for log_enum in LogService}
+    
