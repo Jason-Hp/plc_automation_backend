@@ -77,5 +77,6 @@ def format_form(payload: Any, title: str = "Form Submission") -> str:
         return "\n".join(html_parts)
         
     except Exception as e:
-        LogService.ERROR.log(f"Error formatting form data: {str(e)}", level="ERROR")
+        # Expected fallback: return raw payload so emails still go out.
+        LogService.DEBUG.log(f"Error formatting form data; returning raw payload: {str(e)}", level="WARNING")
         return str(payload)

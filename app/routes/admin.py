@@ -15,7 +15,7 @@ from fastapi.responses import FileResponse, RedirectResponse
 from pydantic import ValidationError
 
 from app.schemas import AccountCreationRequest,UserInfo, ApprovalResponse, Approval, QuoteListResponse, Quote, Country, Manufacturer, Category, Job, Product, Blog, BatchProductUploadResult, AdminLoginRequest, ApiResponse, NewsLetterContentRequest, FAQ, ContactInfo
-from app.config import Settings
+from app.config import settings
 from app.services.log_service import LogService
 from app.dependencies import (
     blog_repo,
@@ -38,7 +38,6 @@ from app.services.jwt_service import JwtTokenError
 from app.utils.user_role import UserRole
 
 router = APIRouter(prefix="/admin", tags=["admin"])
-settings = Settings()
 security = HTTPBearer()
 timezone = pytz.timezone(settings.timezone)
 
@@ -85,8 +84,31 @@ async def create_account(accountCreationRequest: AccountCreationRequest, token_d
     
     try:
         supabase_service.create_user(new_user_email, new_user_password, new_user_role)
+        LogService.ADMIN.log(
+            json.dumps(
+                {
+                    "event": "ADMIN_ACCOUNT_CREATED",
+                    "actor": token_data.get("email"),
+                    "created_user_email": new_user_email,
+                    "created_user_role": new_user_role,
+                }
+            )
+        )
         return ApiResponse(message="Account created successfully.")
     except Exception as exc:
+        LogService.ADMIN.log(
+            json.dumps(
+                {
+                    "event": "ADMIN_ACCOUNT_CREATE_FAILED",
+                    "actor": token_data.get("email"),
+                    "created_user_email": new_user_email,
+                    "created_user_role": new_user_role,
+                    "error": str(exc),
+                    "error_type": type(exc).__name__,
+                }
+            ),
+            level="WARNING",
+        )
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     
 
@@ -114,6 +136,16 @@ async def upload_offer_products(
         _ = row
         processed += 1
 
+    LogService.ADMIN.log(
+        json.dumps(
+            {
+                "event": "ADMIN_PRODUCTS_BATCH_CSV_PROCESSED",
+                "actor": token_data.get("email"),
+                "filename": csv_file.filename,
+                "processed": processed,
+            }
+        )
+    )
     return BatchProductUploadResult(processed=processed, message="CSV processed (placeholder).")
 
 @router.post("/products", response_model=ApiResponse)
@@ -182,6 +214,17 @@ async def broadcast_newsletter(
         email_attachments
     )
 
+    LogService.ADMIN.log(
+        json.dumps(
+            {
+                "event": "ADMIN_NEWSLETTER_BROADCASTED",
+                "actor": token_data.get("email"),
+                "subject": parsed_payload.subject,
+                "recipients": len(cc_addrs),
+                "attachments": len(email_attachments) if email_attachments else 0,
+            }
+        )
+    )
     return ApiResponse(message="Newsletter broadcasted.")
 
 @router.post("/faqs", response_model=ApiResponse)
@@ -424,7 +467,10 @@ async def get_quote_by_id(
     token_data: dict = Depends(verify_token)
 ) -> Quote:
     
-    return quote_repo.get_quote_by_id(quote_id)
+    try:
+        return quote_repo.get_quote_by_id(quote_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
 
 @router.post("/quotes", response_model=ApiResponse)
 async def add_quote(
@@ -465,24 +511,25 @@ async def get_admin_logs(log_type: str,
     if not date:
         date = datetime.datetime.now(timezone).strftime("%Y-%m-%d")
     
-    # For logs today, we can return the file directly from the local disk (which is being written to in real-time), for past logs we can fetch from S3
+    log_enum = LogService.get_log_enum(log_type)
+
+    # For logs today, we can return the file directly from the local disk (which is being written to in real-time),
+    # for past logs we can fetch from S3.
     if date == datetime.datetime.now(timezone).strftime("%Y-%m-%d"):
 
-        log_file_path = Path(settings.admin_log_location) / f"{date}.log"
+        log_file_path = Path(log_enum.location) / f"{log_enum.prefix}_{date}.log"
         
         if not log_file_path.exists():
             raise HTTPException(status_code=404, detail=f"Log file for {date} not found.")
         
         return FileResponse(
             path=log_file_path,
-            filename=f"admin_logs_{date}.log",
+            filename=f"{log_enum.prefix}_{date}.log",
             media_type="text/plain"
         )
     # Get from S3 for past logs
     else:
         try:
-            log_enum = LogService.get_log_enum(log_type)
-
             key = f"{log_enum.prefix}_{date}.log"
             log_content_url = storage_service.get_object_url(settings.aws_s3_log_bucket, key)
 
