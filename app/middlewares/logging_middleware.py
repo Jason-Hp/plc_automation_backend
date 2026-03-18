@@ -32,7 +32,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):
         LogService.WEB.log(json.dumps(log_entry))
         
         try:
-            # Call the endpoint
+            # Go next, basically call the endpoint
             response = await call_next(request)
             
             # Log response

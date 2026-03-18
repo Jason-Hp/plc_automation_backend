@@ -4,6 +4,7 @@ import csv
 import datetime
 import io
 import json
+import pytz
 from pathlib import Path
 from typing import Optional
 
@@ -39,6 +40,7 @@ from app.utils.user_role import UserRole
 router = APIRouter(prefix="/admin", tags=["admin"])
 settings = Settings()
 security = HTTPBearer()
+timezone = pytz.timezone(settings.timezone)
 
 async def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)) -> dict:
     try:
@@ -461,10 +463,10 @@ async def get_admin_logs(log_type: str,
                          token_data: dict = Depends(verify_token)):
     is_admin(token_data)
     if not date:
-        date = datetime.datetime.now().strftime("%Y-%m-%d")
+        date = datetime.datetime.now(timezone).strftime("%Y-%m-%d")
     
     # For logs today, we can return the file directly from the local disk (which is being written to in real-time), for past logs we can fetch from S3
-    if date == datetime.datetime.now().strftime("%Y-%m-%d"):
+    if date == datetime.datetime.now(timezone).strftime("%Y-%m-%d"):
 
         log_file_path = Path(settings.admin_log_location) / f"{date}.log"
         
@@ -522,7 +524,7 @@ async def add_approval(
 ) -> ApiResponse:
     email = token_data.get("email")
     approval.requester = email
-    approval.request_date = datetime.datetime.now().strftime("%Y-%m-%d")
+    approval.request_date = datetime.datetime.now(timezone).strftime("%Y-%m-%d")
     if attachment:
         attachment_url = storage_service.save_upload_public(settings.aws_s3_blob_bucket, await attachment.read(), original_filename=attachment.filename)
         approval.attachment_url = attachment_url

@@ -13,8 +13,8 @@ def upload_logs_to_s3_and_clear_local():
     for log_enum in log_enums:
         
         # get previous day in SGT (UTC+8)
-        sgt = pytz.timezone(settings.timezone)
-        previous_day = datetime.now(sgt) - timedelta(days=1)
+        timezone = pytz.timezone(settings.timezone)
+        previous_day = datetime.now(timezone) - timedelta(days=1)
         date_str = previous_day.strftime("%Y-%m-%d")
         log_file = os.path.join(log_enum.location, f"{log_enum.prefix}_{date_str}.log")
         

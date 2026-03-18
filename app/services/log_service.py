@@ -17,9 +17,10 @@ class LogService(Enum):
     def __init__(self, location: str, prefix: str):
         self.location = location
         self.prefix = prefix
+        self.timezone = pytz.timezone(settings.timezone)
 
     def get_log_file(self) -> str:
-        date_str = datetime.now().strftime("%Y-%m-%d")
+        date_str = datetime.now(self.timezone).strftime("%Y-%m-%d")
         log_file = os.path.join(self.location, f"{self.prefix}_{date_str}.log")
         
         # Ensure the log directory exists
@@ -35,7 +36,7 @@ class LogService(Enum):
         
         level = level.upper()
         log_file = self.get_log_file()
-        current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        current_time = datetime.now(self.timezone).strftime("%Y-%m-%d %H:%M:%S")
         formatted_message = f"[{level}] [{current_time}]: {message}\n"
 
         with open(log_file, "a", encoding="utf-8") as f:

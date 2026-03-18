@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import pytz
+
 from copy import deepcopy
 from datetime import datetime, timezone
 
 from app.schemas import Quote, QuoteListResponse, ProductPreviewWithQuantity
+from app.config import settings
 
 
 class QuoteRepository:
@@ -49,7 +52,7 @@ class QuoteRepository:
         # Simulate quote entity/table persistence basically quote entity has everything quote has but not the product preview list (that belongs to the join table)
         quote_entity = quote.model_copy(deep=True)
         quote_entity.id = quote_id
-        quote_entity.created_at = quote_entity.created_at or datetime.now(timezone.utc).isoformat()
+        quote_entity.created_at = quote_entity.created_at or datetime.now(pytz.timezone(settings.timezone)).isoformat()
         self._quote_table[quote_id] = quote_entity
 
         # Simulate quote_products join table persistence
