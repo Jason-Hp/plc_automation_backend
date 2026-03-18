@@ -632,6 +632,51 @@ All endpoints below are under `/api`.
 }
 ```
 
+### GET `/api/admin/user-info`
+**Headers**
+```json
+{
+  "lang": "en (optional)",
+  "country": "SG (optional)",
+  "Authorization": "Bearer <token>"
+}
+```
+
+**Response 200**
+```json
+{
+  "uuid": "user-uuid",
+  "email": "user@example.com",
+  "user_role": "admin"
+}
+```
+
+### POST `/api/admin/account`
+**Headers**
+```json
+{
+  "lang": "en (optional)",
+  "country": "SG (optional)",
+  "Authorization": "Bearer <token>"
+}
+```
+
+**Request body (application/json)**
+```json
+{
+  "email": "newuser@example.com",
+  "password": "strong-password",
+  "user_role": "user"
+}
+```
+
+**Response 200**
+```json
+{
+  "message": "Account created successfully."
+}
+```
+
 ### POST `/api/admin/products/batch`
 **Headers**
 ```json
