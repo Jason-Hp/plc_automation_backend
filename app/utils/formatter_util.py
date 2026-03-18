@@ -76,7 +76,6 @@ def format_form(payload: Any, title: str = "Form Submission") -> str:
         html_parts.append("</div>")
         return "\n".join(html_parts)
         
-    except json.JSONDecodeError as e:
-        raise e
     except Exception as e:
-        raise e
+        LogService.ERROR.log(f"Error formatting form data: {str(e)}", level="ERROR")
+        return str(payload)
