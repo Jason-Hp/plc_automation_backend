@@ -28,21 +28,9 @@ class Settings(BaseSettings):
     quote_and_enquiry_email: str = ""
     hr_email: str = "hr@plcautomat.com"
 
-    # JWT configuration
-    jwt_secret_key: str = "change_me_in_env"
-    jwt_algorithm: str = "HS256"
-    jwt_expiration_hours: int = 3
-
     # Admin is the only approver (REFACTOR ACCOUNTS TO BE STORED IN DB INSTEAD)
+    # This value should align with the Supabase user identifier (e.g. email or user id)
     admin_username: str = "admin"
-    admin_password: str = "password"
-
-    # Updater accounts
-    updater_1_username: str = "updater1"
-    updater_1_password: str = "password1"
-
-    updater_2_username: str = "updater2"
-    updater_2_password: str = "password2"
 
     upload_dir: str = str(UPLOAD_DIR)
     database_url: str = ""
@@ -58,6 +46,11 @@ class Settings(BaseSettings):
     aws_s3_bucket: Optional[str] = None
     aws_region: Optional[str] = None
     aws_cloudfront_domain: Optional[str] = None
+
+    # Supabase configuration (used for auth and semantic search)
+    supabase_url: str = ""
+    supabase_key: str = ""
+    supabase_jwt_audience: Optional[str] = None
 
     model_config = SettingsConfigDict(env_file=".env", env_prefix="", case_sensitive=False)
 

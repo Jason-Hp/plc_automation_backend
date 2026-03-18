@@ -76,7 +76,6 @@ class NewsLetterContentRequest(BaseModel):
     subject: str = Field(..., min_length=1)
     content: str = Field(..., min_length=1)
 
-# TODO: refactor these schema FAQ, req and resp -> for FAQ and Contact Info
 class FAQ(BaseModel):
     id: Optional[int] = None
     question: str = Field(..., min_length=1)
@@ -156,3 +155,13 @@ class ApprovalResponse(BaseModel):
     per_page: int
     total: int
     approvals: list[Approval] = []
+
+class UserInfo(BaseModel):
+    uuid: str
+    email: str
+    user_role: str
+
+class AccountCreationRequest(BaseModel):
+    email: str = Field(..., min_length=3)
+    password: str = Field(..., min_length=6)
+    user_role: str = Field(..., min_length=1)

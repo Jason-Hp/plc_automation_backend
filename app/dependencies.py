@@ -13,6 +13,7 @@ from app.services.email_service import EmailService
 from app.services.jwt_service import JwtService
 from app.services.search_service import SearchService
 from app.services.storage_service import StorageService
+from app.services.supabase_service import SupabaseService
 
 newsletter_repo = NewsletterRepository()
 approval_repo = ApprovalRepository()
@@ -30,3 +31,4 @@ email_service = EmailService()
 jwt_service = JwtService()
 search_service = SearchService()
 storage_service = StorageService()
+supabase_service = SupabaseService()

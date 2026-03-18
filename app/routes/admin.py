@@ -13,7 +13,7 @@ from fastapi.responses import FileResponse
 
 from pydantic import ValidationError
 
-from app.schemas import ApprovalResponse, Approval, QuoteListResponse, Quote, Country, Manufacturer, Category, Job, Product, Blog, BatchProductUploadResult, AdminLoginRequest, ApiResponse, NewsLetterContentRequest, FAQ, ContactInfo
+from app.schemas import AccountCreationRequest,UserInfo, ApprovalResponse, Approval, QuoteListResponse, Quote, Country, Manufacturer, Category, Job, Product, Blog, BatchProductUploadResult, AdminLoginRequest, ApiResponse, NewsLetterContentRequest, FAQ, ContactInfo
 from app.config import Settings
 from app.services.log_service import LogService
 from app.dependencies import (
@@ -30,9 +30,11 @@ from app.dependencies import (
     product_repo,
     quote_repo,
     approval_repo,
-    storage_service
+    storage_service,
+    supabase_service
 )
 from app.services.jwt_service import JwtTokenError
+from app.utils.user_role import UserRole
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 settings = Settings()
@@ -48,6 +50,41 @@ async def verify_token(credentials: HTTPAuthorizationCredentials = Depends(secur
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=str(exc)
         ) from exc
+
+async def get_user_role(token_data: dict) -> UserRole:
+    user_role = token_data.get("app_metadata", {}).get("user_role")
+    try:
+        return UserRole(user_role)
+    except ValueError:
+        raise HTTPException(status_code=403, detail="Invalid user role.")
+    
+@router.get("/user-info", response_model=UserInfo)
+async def get_user_info(token_data: dict = Depends(verify_token)) -> UserInfo:
+    user_role = get_user_role(token_data)
+    uuid = token_data.get("sub")
+    email = token_data.get("email")
+    return UserInfo(uuid=uuid, email=email, user_role=user_role.value)
+
+@router.post("/account", response_model=ApiResponse)
+async def create_account(accountCreationRequest: AccountCreationRequest, token_data: dict = Depends(verify_token)) -> ApiResponse:
+    user_role = get_user_role(token_data)
+    if user_role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Only admin can create accounts.")
+    
+    new_user_email = accountCreationRequest.email
+    new_user_password = accountCreationRequest.password
+    try:
+        new_user_role = UserRole(accountCreationRequest.user_role).value 
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid user role. Must be 'admin' or 'user'.")
+    
+    try:
+        supabase_service.create_user(new_user_email, new_user_password, new_user_role)
+        return ApiResponse(message="Account created successfully.")
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    
+
 
 # TODO: refactor
 # This is a batch upload and/or update using CSV
@@ -508,22 +545,4 @@ async def reject_approval(
     else:
         raise HTTPException(status_code=404, detail="Approval not found.")
     
-
-
-@router.post("/login")
-async def admin_login(payload: AdminLoginRequest) -> str:
-
-    # TODO: return jwt token 3 hour expiry (need to refactor/change how password is accessed here for sec reasons)
-    match (payload.username, payload.password):
-        case (settings.admin_username, settings.admin_password):
-            jwt_token = jwt_service.create_jwt_token(payload.username)
-            return jwt_token
-        case (settings.updater_1_username, settings.updater_1_password):
-            jwt_token = jwt_service.create_jwt_token(payload.username)
-            return jwt_token
-        case (settings.updater_2_username, settings.updater_2_password):
-            jwt_token = jwt_service.create_jwt_token(payload.username)
-            return jwt_token
-        case _:
-            raise HTTPException(status_code=401, detail="Invalid credentials")
 
