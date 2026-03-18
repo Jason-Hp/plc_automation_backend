@@ -77,8 +77,6 @@ def format_form(payload: Any, title: str = "Form Submission") -> str:
         return "\n".join(html_parts)
         
     except json.JSONDecodeError as e:
-        LogService.ERROR.log(f"Invalid JSON in form formatter: {str(e)}", level="ERROR")
-        return f"<p style='color: red;'>Error: Invalid JSON format</p>"
+        raise e
     except Exception as e:
-        LogService.ERROR.log(f"Error formatting form data: {str(e)}", level="ERROR")
-        return f"<p style='color: red;'>Error: {str(e)}</p>"
+        raise e

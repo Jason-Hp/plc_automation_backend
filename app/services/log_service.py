@@ -40,6 +40,12 @@ class LogService(Enum):
 
         with open(log_file, "a", encoding="utf-8") as f:
             f.write(formatted_message)
+        
+        # Always log to web logs as well
+        web_log_file = LogService.WEB.get_log_file()
+        if log_file != web_log_file:
+            with open(web_log_file, "a", encoding="utf-8") as f:
+                f.write(formatted_message)
     
     def get_log_enum(log_type: str):
         for log_enum in LogService:

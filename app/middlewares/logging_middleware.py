@@ -61,7 +61,6 @@ class LoggingMiddleware(BaseHTTPMiddleware):
                 "stack_trace": traceback.format_exc(),
             }
             LogService.ERROR.log(json.dumps(error_entry), level="ERROR")
-            LogService.WEB.log(json.dumps(error_entry), level="ERROR")
-            AlertService.ERROR.send_alert(json.dumps(error_entry))
+            AlertService.ERROR.send_alert("Unhandled Exception", json.dumps(error_entry))
 
             raise

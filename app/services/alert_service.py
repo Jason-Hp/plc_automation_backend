@@ -11,9 +11,9 @@ class AlertService(Enum):
         self.email_svc = EmailService()
         self.alert_type = value
 
-    def send_alert(self, message: str) -> None:
+    def send_alert(self, subject: str, message: str) -> None:
         """Send an error alert email to admin."""
-        subject = f"{self.alert_type} Alert Notification"
+        subject = f"{self.alert_type} Alert Notification - {subject}"
         to_addrs = [settings.admin_email]
         self.email_svc.send(
             subject,
