@@ -58,6 +58,11 @@ async def get_user_role(token_data: dict) -> UserRole:
     except ValueError:
         raise HTTPException(status_code=403, detail="Invalid user role.")
     
+async def is_admin(token_data: dict) -> bool:
+    if get_user_role(token_data) == UserRole.ADMIN:
+        return True
+    raise HTTPException(status_code=403, detail="Admin privileges required.")
+    
 @router.get("/user-info", response_model=UserInfo)
 async def get_user_info(token_data: dict = Depends(verify_token)) -> UserInfo:
     user_role = get_user_role(token_data)
@@ -67,9 +72,7 @@ async def get_user_info(token_data: dict = Depends(verify_token)) -> UserInfo:
 
 @router.post("/account", response_model=ApiResponse)
 async def create_account(accountCreationRequest: AccountCreationRequest, token_data: dict = Depends(verify_token)) -> ApiResponse:
-    user_role = get_user_role(token_data)
-    if user_role != UserRole.ADMIN:
-        raise HTTPException(status_code=403, detail="Only admin can create accounts.")
+    is_admin(token_data)
     
     new_user_email = accountCreationRequest.email
     new_user_password = accountCreationRequest.password
@@ -93,6 +96,8 @@ async def upload_offer_products(
     csv_file: UploadFile = File(...),
     token_data: dict = Depends(verify_token)
 ) -> BatchProductUploadResult:
+    is_admin(token_data)
+
     if not csv_file.filename.endswith(".csv"):
         raise HTTPException(status_code=400, detail="Only CSV files are supported.")
 
@@ -115,7 +120,7 @@ async def upload_product(
     country_ids: list[int],
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
-
+    is_admin(token_data)
     product_repo.add_product(product)
     country_repo.add_product_availability_for_country(country_ids, product.id)
     return ApiResponse(message="Product uploaded successfully.")
@@ -127,7 +132,7 @@ async def update_product(
     country_ids: list[int],
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
-
+    is_admin(token_data)
     product_repo.update_product(product_id, product)
     country_repo.update_product_availability_for_country(country_ids, product.id)
     return ApiResponse(message="Product updated successfully.")
@@ -138,6 +143,7 @@ async def delete_product(
     product_id: int,
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
+    is_admin(token_data)
     product_repo.delete_product(product_id)
     country_repo.delete_all_product_availability_for_country(product_id)
     return ApiResponse(message="Product deleted successfully.") 
@@ -148,6 +154,7 @@ async def broadcast_newsletter(
     attachments: list[UploadFile] = File(default=[]),
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
+    is_admin(token_data)
     try:
         parsed_payload = NewsLetterContentRequest.model_validate_json(payload)
     except ValidationError as exc:
@@ -180,7 +187,7 @@ async def upload_faqs(
     faqs: list[FAQ],
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
-    
+    is_admin(token_data)
     # Able to do batching here (But not needed as adding FAQs is not frequent or big)
     for faq in faqs:
         faq_repo.add_faq(faq.question, faq.answer)
@@ -193,7 +200,7 @@ async def update_faq(
     faq: FAQ,
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
-    
+    is_admin(token_data)
     faq_repo.update_faq(faq_id, faq.question, faq.answer)
 
     return ApiResponse(message="FAQ updated successfully.")
@@ -203,7 +210,7 @@ async def delete_faq(
     faq_id: int,
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
-    
+    is_admin(token_data)
     faq_repo.delete_faq(faq_id)
 
     return ApiResponse(message="FAQ deleted successfully.")
@@ -213,7 +220,7 @@ async def upload_contact_info(
     contact_info: ContactInfo,
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
-    
+    is_admin(token_data)
     contact_info_repo.add_contact_info(contact_info)
 
     return ApiResponse(message="Contact info uploaded successfully.")
@@ -224,7 +231,7 @@ async def update_contact_info(
     contact_info: ContactInfo,
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
-    
+    is_admin(token_data)
     contact_info_repo.update_contact_info(contact_id, contact_info)
 
     return ApiResponse(message="Contact info updated successfully.")
@@ -234,7 +241,7 @@ async def delete_contact_info(
     contact_id: int,
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
-    
+    is_admin(token_data)
     contact_info_repo.delete_contact_info(contact_id)
 
     return ApiResponse(message="Contact info deleted successfully.")
@@ -245,7 +252,7 @@ async def upload_blog(
     categories: list[Category],
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
-
+    is_admin(token_data)
     blog = blog_repo.add_blog(blog)
     category_repo.add_categories_to_blog(blog.id, categories)
     return ApiResponse(message="Blog uploaded successfully.")
@@ -257,7 +264,7 @@ async def update_blog(
     categories: list[Category],
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
-    
+    is_admin(token_data)
     blog_repo.update_blog(blog_id, blog)
     category_repo.update_categories_of_blog(blog_id, categories)
 
@@ -268,7 +275,7 @@ async def delete_blog(
     blog_id: int,
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
-    
+    is_admin(token_data)
     blog_repo.delete_blog(blog_id)
     category_repo.delete_all_categories_from_blog(blog_id)
 
@@ -279,7 +286,7 @@ async def upload_job(
     job: Job,
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
-    
+    is_admin(token_data)
     job_repo.add_job(job)
 
     return ApiResponse(message="Job uploaded successfully.")
@@ -290,7 +297,7 @@ async def update_job(
     job: Job,
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
-    
+    is_admin(token_data)
     job_repo.update_job(job_id, job)
 
     return ApiResponse(message="Job updated successfully.")
@@ -300,7 +307,7 @@ async def delete_job(
     job_id: int,
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
-    
+    is_admin(token_data)
     job_repo.delete_job(job_id)
 
     return ApiResponse(message="Job deleted successfully.")
@@ -310,7 +317,7 @@ async def upload_category(
     category: Category,
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
-    
+    is_admin(token_data)
     category_repo.add_category(category)
 
     return ApiResponse(message="Category uploaded successfully.")
@@ -321,7 +328,7 @@ async def update_category(
     category: Category,
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
-    
+    is_admin(token_data)
     category_repo.update_category(category_id, category)
 
     return ApiResponse(message="Category updated successfully.")
@@ -331,7 +338,7 @@ async def delete_category(
     category_id: int,
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
-    
+    is_admin(token_data)
     category_repo.delete_category(category_id)
 
     return ApiResponse(message="Category deleted successfully.")
@@ -341,7 +348,7 @@ async def upload_manufacturer(
     manufacturer: Manufacturer,
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
-    
+    is_admin(token_data)
     manufacturer_repo.add_manufacturer(manufacturer)
 
     return ApiResponse(message="Manufacturer uploaded successfully.")
@@ -352,7 +359,7 @@ async def update_manufacturer(
     manufacturer: Manufacturer,
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
-    
+    is_admin(token_data)
     manufacturer_repo.update_manufacturer(manufacturer_id, manufacturer)
 
     return ApiResponse(message="Manufacturer updated successfully.")
@@ -362,7 +369,7 @@ async def delete_manufacturer(
     manufacturer_id: int,
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
-    
+    is_admin(token_data)
     manufacturer_repo.delete_manufacturer(manufacturer_id)
 
     return ApiResponse(message="Manufacturer deleted successfully.")
@@ -372,7 +379,7 @@ async def upload_country(
     country: Country,
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
-    
+    is_admin(token_data)
     country_repo.add_country(country)
 
     return ApiResponse(message="Country uploaded successfully.")
@@ -383,7 +390,7 @@ async def update_country(
     country: Country,
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
-    
+    is_admin(token_data)
     country_repo.update_country(country_id, country)
 
     return ApiResponse(message="Country updated successfully.")
@@ -393,7 +400,7 @@ async def delete_country(
     country_id: int,
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
-    
+    is_admin(token_data)
     country_repo.delete_country(country_id)
 
     return ApiResponse(message="Country deleted successfully.")
@@ -406,7 +413,7 @@ async def get_all_quotes(
     page: int = Query(1, ge=1),
     per_page: int = Query(10, ge=1, le=100)
 ) -> QuoteListResponse:
-    
+
     return quote_repo.get_all_quotes(search, page, per_page)
 
 @router.get("/quote/{quote_id}", response_model=Quote)
@@ -422,7 +429,7 @@ async def add_quote(
     quote: Quote,
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
-    
+    is_admin(token_data)
     quote_repo.add_quote(quote)
 
     return ApiResponse(message="Quote added successfully.")
@@ -433,7 +440,7 @@ async def update_quote(
     quote: Quote,
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
-    
+    is_admin(token_data)
     quote_repo.update_quote(quote_id, quote)
     return ApiResponse(message="Quote updated successfully.")
 
@@ -442,7 +449,7 @@ async def delete_quote(
     quote_id: int,
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
-    
+    is_admin(token_data)
     quote_repo.delete_quote(quote_id)
 
     return ApiResponse(message="Quote deleted successfully.")
@@ -450,9 +457,7 @@ async def delete_quote(
 # This is a download
 @router.get("/admin_logs")
 async def get_admin_logs(date: str = None, token_data: dict = Depends(verify_token)):
-    current_sub = token_data.get("sub")
-    if current_sub != settings.admin_username:
-        raise HTTPException(status_code=403, detail="Only admin can access logs.")
+    is_admin(token_data)
     if not date:
         date = datetime.datetime.now().strftime("%Y-%m-%d")
     
@@ -476,10 +481,11 @@ async def get_all_approvals(
     page: int = Query(1, ge=1),
     per_page: int = Query(10, ge=1, le=100)
 ) -> ApprovalResponse:
-    sub = token_data.get("sub")
-    if sub != settings.admin_username:
+    user_role = get_user_role(token_data)
+    if user_role != UserRole.ADMIN:
         # For non-admin users, only return their own requests
-        return approval_repo.get_approvals(approval_id=approval_id, approval_type=approval_type, is_approved=is_approved, requester=sub)
+        email = token_data.get("email")
+        return approval_repo.get_approvals(approval_id=approval_id, approval_type=approval_type, is_approved=is_approved, requester=email)
     return approval_repo.get_approvals(
         approval_id=approval_id,
         approval_type=approval_type,
@@ -492,13 +498,13 @@ async def add_approval(
     attachment: Optional[UploadFile] = File(None),
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
-    sub = token_data.get("sub")
-    approval.requester = sub
+    email = token_data.get("email")
+    approval.requester = email
     approval.request_date = datetime.datetime.now().strftime("%Y-%m-%d")
     if attachment:
         attachment_url = storage_service.save_upload(await attachment.read(), original_filename=attachment.filename)
         approval.attachment_url = attachment_url
-    LogService.ADMIN.log(f"New approval request added by {sub}: {approval.model_dump_json()}")
+    LogService.ADMIN.log(f"New approval request added by {email}: {approval.model_dump_json()}")
     approval_repo.add_approval(approval)
     return ApiResponse(message="Approval added successfully.")
 
@@ -507,10 +513,10 @@ async def delete_approval(
     approval_id: int,
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
-    sub = token_data.get("sub")
-    success = approval_repo.delete_approval(approval_id, deleter=sub)
+    email = token_data.get("email")
+    success = approval_repo.delete_approval(approval_id, deleter=email)
     if success:
-        LogService.ADMIN.log(f"Approval request {approval_id} deleted by {sub}")
+        LogService.ADMIN.log(f"Approval request {approval_id} deleted by {email}")
         return ApiResponse(message="Approval deleted successfully.")
     else:
         raise HTTPException(status_code=404, detail="Approval not found.")
@@ -520,12 +526,11 @@ async def approve_approval(
     approval_id: int,
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
-    sub = token_data.get("sub")
-    if sub != settings.admin_username:
-        raise HTTPException(status_code=403, detail="Only admin can approve requests.")
+    is_admin(token_data)
+    email = token_data.get("email")
     approval = approval_repo.approve_request(approval_id)
     if approval:
-        LogService.ADMIN.log(f"Approval request {approval_id} approved by {sub}")
+        LogService.ADMIN.log(f"Approval request {approval_id} approved by {email}")
         return ApiResponse(message="Approval approved successfully.")
     else:
         raise HTTPException(status_code=404, detail="Approval not found.")
@@ -535,12 +540,11 @@ async def reject_approval(
     approval_id: int,
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
-    sub = token_data.get("sub")
-    if sub != settings.admin_username:
-        raise HTTPException(status_code=403, detail="Only admin can approve requests.")
+    is_admin(token_data)
+    email = token_data.get("email")
     approval = approval_repo.reject_request(approval_id)
     if approval:
-        LogService.ADMIN.log(f"Approval request {approval_id} rejected by {sub}")
+        LogService.ADMIN.log(f"Approval request {approval_id} rejected by {email}")
         return ApiResponse(message="Approval rejected successfully.")
     else:
         raise HTTPException(status_code=404, detail="Approval not found.")
