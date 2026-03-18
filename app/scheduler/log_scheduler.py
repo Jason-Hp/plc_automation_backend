@@ -5,17 +5,18 @@ import pytz
 from app.config import settings
 import os
 
-from app.dependencies import storage_service
+from app.dependencies import storage_service, email_service
 from app.services.log_service import LogService
 
 def upload_logs_to_s3_and_clear_local():
-    log_locations = LogService.get_all_log_locations()
-    for log_type, location in log_locations.items():
+    log_enums = LogService.get_all_enums()
+    for log_enum in log_enums:
+        
         # get previous day in SGT (UTC+8)
         sgt = pytz.timezone(settings.timezone)
         previous_day = datetime.now(sgt) - timedelta(days=1)
         date_str = previous_day.strftime("%Y-%m-%d")
-        log_file = os.path.join(location, f"{log_type}_{date_str}.log")
+        log_file = os.path.join(log_enum.location, f"{log_enum.prefix}_{date_str}.log")
         
         if os.path.isfile(log_file):
             with open(log_file, "rb") as f:
@@ -23,11 +24,17 @@ def upload_logs_to_s3_and_clear_local():
                 storage_service.save_upload_private(
                     bucket=settings.aws_s3_log_bucket,
                     payload=payload,
-                    original_filename=f"{log_type}_{date_str}.log"
+                    original_filename=f"{log_enum.prefix}_{date_str}.log"
                 )
-                
+
             # Clear local log after uploading
             os.remove(log_file)
+            email_service.send(
+                subject=f"Logs Uploaded: {log_enum.prefix}_{date_str}.log",
+                body=f"The log file {log_enum.prefix}_{date_str}.log has been uploaded to S3 and cleared from local storage.",
+                html_body=None,
+                to_addrs=[settings.admin_email]
+            )
 
 # Start the background scheduler to run the log upload task daily
 def start_log_scheduler():

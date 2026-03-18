@@ -47,6 +47,6 @@ class LogService(Enum):
                 return log_enum
         return LogService.WEB  # default to WEB if not found
     
-    def get_all_log_locations():
-        return {log_enum.prefix: log_enum.location for log_enum in LogService}
+    def get_all_enums():
+        return [log_enum for log_enum in LogService]
     

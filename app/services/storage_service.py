@@ -4,6 +4,8 @@ from typing import Optional
 import uuid
 
 from app.config import settings
+from app.services.log_service import LogService
+from app.dependencies import email_service
 
 import boto3
 from botocore.exceptions import BotoCoreError, ClientError
@@ -27,6 +29,13 @@ class StorageService:
                 region_name=settings.aws_region,
             )
         else:
+            LogService.ERROR.log("AWS S3 credentials not configured. StorageService will not be functional.", level="ERROR")
+            email_service.send(
+                subject="URGENT!!! AWS S3 Configuration Missing",
+                body="AWS S3 credentials are not configured. StorageService will not be functional. Please check the logs for details.",
+                html_body=None,
+                to_addrs=[settings.admin_email]
+            )
             raise NotImplementedError("Please configure AWS S3 credentials and bucket to enable storage.")
 
     def get_object_url(self, bucket: str, key: str) -> str:
@@ -42,6 +51,7 @@ class StorageService:
             )
             return presigned_url
         except Exception as exc:
+            LogService.ERROR.log(f"Failed to generate presigned URL: {str(exc)}", level="ERROR")
             raise exc
     
     def save_upload_private(
@@ -56,6 +66,13 @@ class StorageService:
         try:
             self.s3_client.put_object(Bucket=bucket, Key=key, Body=payload)
         except (BotoCoreError, ClientError) as exc:
+            LogService.ERROR.log(f"Failed to upload log to S3: {str(exc)}", level="ERROR")
+            email_service.send(
+                subject="URGENT!!! Failed to Upload Logs to S3",
+                body=f"An error occurred while uploading logs to S3: {str(exc)}. Please check the logs for details.",
+                html_body=None,
+                to_addrs=[settings.admin_email]
+            )
             raise exc
 
 
@@ -71,6 +88,7 @@ class StorageService:
         try:
             self.s3_client.put_object(Bucket=bucket, Key=key, Body=payload)
         except (BotoCoreError, ClientError) as exc:
+            LogService.ERROR.log(f"Failed to upload file to S3: {str(exc)}", level="ERROR")
             raise exc
 
         # Use CloudFront CDN URL if configured, otherwise use S3 URL; THIS IS IMPORTANT TO REDUCE COSTS AND IMPROVE PERFORMANCE
