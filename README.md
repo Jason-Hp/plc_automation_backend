@@ -1627,10 +1627,7 @@ All endpoints below are under `/api`.
 {
   "type": "ADD_Product",
   "payload": "{\"product_id\": 1, \"field\": \"price\", \"new_value\": 500}",
-  "is_approved": false,
-  "requester": "(auto-filled from token)",
-  "request_date": "(auto-filled by server)",
-  "attachment_url": "(auto-filled when attachment is saved)"
+  "is_approved": false
 }
 ```
 
