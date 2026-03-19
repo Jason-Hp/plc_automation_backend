@@ -542,7 +542,6 @@ async def get_admin_logs(log_type: str,
             raise HTTPException(status_code=404, detail=f"Log file for {date} not found.") from exc
 
 
-#TODO PAGES AFTER
 @router.get("/approvals", response_model=ApprovalResponse)
 async def get_all_approvals(
     token_data: dict = Depends(verify_token),
@@ -556,11 +555,13 @@ async def get_all_approvals(
     if user_role != UserRole.ADMIN:
         # For non-admin users, only return their own requests
         email = token_data.get("email")
-        return approval_repo.get_approvals(approval_id=approval_id, approval_type=approval_type, is_approved=is_approved, requester=email)
+        return approval_repo.get_approvals(approval_id=approval_id, approval_type=approval_type, is_approved=is_approved, requester=email, page=page, per_page=per_page)
     return approval_repo.get_approvals(
         approval_id=approval_id,
         approval_type=approval_type,
-        is_approved=is_approved
+        is_approved=is_approved,
+        page=page,
+        per_page=per_page
     )
 
 @router.post("/approvals", response_model=ApiResponse)
