@@ -7,6 +7,8 @@ from pydantic import ValidationError
 
 from app.config import settings
 from app.dependencies import email_service, newsletter_repo, quote_repo
+from app.models.api.request_models import QuoteWithProductPreviewsWithQuantityRequest
+from app.models.domain.domain_models import QuoteWithProductPreviewsWithQuantity
 from app.schemas import (
     ApiResponse,
     EnquiryRequest,
@@ -40,14 +42,14 @@ async def submit_enquiry(payload: EnquiryRequest) -> ApiResponse:
 @router.post("/quote", response_model=ApiResponse)
 async def submit_quote(payload: str = Form(...), attachment: UploadFile = File(None)) -> ApiResponse:
     try:
-        parsed_payload = QuoteRequest.model_validate_json(payload)
+        parsed_payload = QuoteWithProductPreviewsWithQuantityRequest.model_validate_json(payload)
     except ValidationError as exc:
         raise HTTPException(status_code=422, detail=json.loads(exc.json())) from exc
 
     ensure_digits(parsed_payload.phone, "phone number")
 
-    quote = Quote(**parsed_payload.model_dump())
-    quote_repo.add_quote(quote)
+    quote_with_product_previews_with_quantity = QuoteWithProductPreviewsWithQuantity.from_request(parsed_payload)
+    quote_repo.add_quote_with_product_previews_with_quantity(quote_with_product_previews_with_quantity)
 
     email_service.send(
         subject=f"Enquiry by {parsed_payload.name}",

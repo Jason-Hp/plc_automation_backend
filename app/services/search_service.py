@@ -1,4 +1,5 @@
-from app.schemas import ProductPreview, Manufacturer
+from app.models.domain.domain_models import ProductPreview
+from app.models.db.data_models import Manufacturer
 from openai import OpenAI
 import tiktoken
 from supabase import Client, create_client

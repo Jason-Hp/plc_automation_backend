@@ -2,7 +2,10 @@ from __future__ import annotations
 
 from typing import List, Optional
 
-from app.schemas import Manufacturer, Product, ProductPreviewListResponse
+from app.models.api.response_models import ProductPreviewListResponse
+from app.models.db.data_models import Product
+from app.models.domain.domain_models import ProductPreview, ProductWithStock
+
 
 
 class ProductRepository:
@@ -22,7 +25,8 @@ class ProductRepository:
             )
         ]
 
-    def get_product_by_id(self, product_id: int) -> Optional[Product]:
+    def get_product_by_id(self, product_id: int) -> Product:
+        # {RULE} Get current product with id {RULE}
         for item in self._products:
             if item.id == product_id:
                 return item
@@ -31,22 +35,25 @@ class ProductRepository:
     def add_product(self, product: Product) -> None:
         self._products.append(product)
 
-    def update_product(self, product_id: int, product: Product) -> None:
+    def update_product(self, product: Product) -> None:
+        # {RULE} update based on product id with product {RULE}
         for idx, item in enumerate(self._products):
             if item.id == product_id:
                 self._products[idx] = product
                 return
             
     def delete_product(self, product_id: int) -> None:
+        # {RULE} delete based on product id {RULE}
         self._products = [item for item in self._products if item.id != product_id]
 
     def list_products(
         self,
         page: int,
         per_page: int,
-        category: Optional[str],
         search: Optional[str],
     ) -> ProductPreviewListResponse:
+        # {RULE} Get products filtered by search with pagination, basically wildcard search on description, name, etc and then convert it to ProductPreview {RULE}
+
         # TODO: Replace with SQL filtering for category + keyword search.
         filtered: List[Product] = self._products
         if search:
@@ -54,9 +61,7 @@ class ProductRepository:
         total = len(filtered)
         start = (page - 1) * per_page
         end = start + per_page
-        return ProductPreviewListResponse(
-            product_previews=filtered[start:end],
-            page=page,
-            per_page=per_page,
-            total=total,
-        )
+        filtered = filtered[start:end]
+
+        return filtered, total
+

@@ -54,14 +54,16 @@ class CountryRepository:
         """
         return (product_id, country_id) in self._product_country_map
 
-    def add_product_availability_for_country(self, country_ids: list[int], product_id: int) -> None:
+    def add_product_availability_for_countries(self, countries: list[str], product_id: int) -> None:
+        # {RULE} Add in JOIN TABLE using countries to get corresponding country ids map to product id {RULE}
         """
         Add availability rows for a product across multiple countries.
         """
         for cid in country_ids:
             self._product_country_map.add((product_id, cid))
 
-    def delete_all_product_availability_for_country(self, product_id: int) -> None:
+    def delete_all_product_availability_for_countries(self, product_id: int) -> None:
+        # {RULE} Delete all entries in JOIN TABLE with product id {RULE}
         """
         Remove all availability rows for a given product.
         """
@@ -69,9 +71,10 @@ class CountryRepository:
             (p_id, c_id) for (p_id, c_id) in self._product_country_map if p_id != product_id
         }
 
-    def update_product_availability_for_country(self, country_ids: list[int], product_id: int) -> None:
+    def update_product_availability_for_countries(self, countries: list[str], product_id: int) -> None:
+        # {RULE} Call delete_all_product_availability_for_countries, then call add_product_availability_for_countries {RULE}
         """
         Replace availability rows for a product with a new set of country IDs.
         """
-        self.delete_all_product_availability_for_country(product_id)
-        self.add_product_availability_for_country(country_ids, product_id)
+        self.delete_all_product_availability_for_countries(product_id)
+        self.add_product_availability_for_countries(countries, product_id)

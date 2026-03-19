@@ -14,8 +14,11 @@ from fastapi.responses import FileResponse, RedirectResponse
 
 from pydantic import ValidationError
 
-from app.schemas import AccountCreationRequest,UserInfo, ApprovalResponse, Approval, QuoteListResponse, Quote, Country, Manufacturer, Category, Job, Product, Blog, BatchProductUploadResult, AdminLoginRequest, ApiResponse, NewsLetterContentRequest, FAQ, ContactInfo
+from app.models.db.data_models import Product, Quote
+from app.models.api.response_models import ApiResponse, QuoteListResponse, QuotePreviewListResponse, QuoteWithProductPreviewsResponse, QuoteWithProductPreviewsWithQuantityResponse
+from app.models.api.request_models import ProductRequest, ProductWithCountriesRequest, QuoteRequest, QuoteWithProductPreviewsWithQuantityRequest
 from app.config import settings
+from app.models.domain.domain_models import QuotePreview, QuoteWithProductPreviewsWithQuantity
 from app.services.log_service import LogService
 from app.dependencies import (
     blog_repo,
@@ -150,25 +153,26 @@ async def upload_offer_products(
 
 @router.post("/products", response_model=ApiResponse)
 async def upload_product(
-    product: Product,
-    country_ids: list[int],
+    request: ProductWithCountriesRequest,
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     is_admin(token_data)
+
+    product = Product.model_validate(request)
     product_repo.add_product(product)
-    country_repo.add_product_availability_for_country(country_ids, product.id)
+    country_repo.add_product_availability_for_countries(request.countries, product.id)
+
     return ApiResponse(message="Product uploaded successfully.")
 
 @router.put("/products/{product_id}", response_model=ApiResponse)
 async def update_product(
-    product_id: int,
-    product: Product,
-    country_ids: list[int],
+    request: ProductWithCountriesRequest,
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     is_admin(token_data)
-    product_repo.update_product(product_id, product)
-    country_repo.update_product_availability_for_country(country_ids, product.id)
+    product = Product.model_validate(request)
+    product_repo.update_product(product)
+    country_repo.update_product_availability_for_countries(request.countries, product.id)
     return ApiResponse(message="Product updated successfully.")
 
 
@@ -179,7 +183,7 @@ async def delete_product(
 ) -> ApiResponse:
     is_admin(token_data)
     product_repo.delete_product(product_id)
-    country_repo.delete_all_product_availability_for_country(product_id)
+    country_repo.delete_all_product_availability_for_countries(product_id)
     return ApiResponse(message="Product deleted successfully.") 
 
 @router.post("/broadcast-newsletter", response_model=ApiResponse)
@@ -450,7 +454,7 @@ async def delete_country(
 
     return ApiResponse(message="Country deleted successfully.")
 
-# TODO: In the future, can look into filter (filter by is_paid, amount, created_at...)
+
 @router.get("/quotes", response_model=QuoteListResponse)
 async def get_all_quotes(
     token_data: dict = Depends(verify_token),
@@ -459,7 +463,8 @@ async def get_all_quotes(
     per_page: int = Query(10, ge=1, le=100)
 ) -> QuoteListResponse:
 
-    return quote_repo.get_all_quotes(search, page, per_page)
+    quotes, total = quote_repo.get_all_quotes(search, page, per_page)
+    return QuotePreviewListResponse(page=page, per_page=per_page, total=total, quote_previews=[QuotePreview.from_quote(quote) for quote in quotes])
 
 @router.get("/quote/{quote_id}", response_model=Quote)
 async def get_quote_by_id(
@@ -468,28 +473,30 @@ async def get_quote_by_id(
 ) -> Quote:
     
     try:
-        return quote_repo.get_quote_by_id(quote_id)
+        return QuoteWithProductPreviewsWithQuantityResponse(quote_with_product_previews_with_quantity=quote_repo.get_quote_with_product_previews_with_quantity_by_id(quote_id))
     except KeyError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
 
 @router.post("/quotes", response_model=ApiResponse)
 async def add_quote(
-    quote: Quote,
+    request: QuoteWithProductPreviewsWithQuantityRequest,
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     is_admin(token_data)
-    quote_repo.add_quote(quote)
+    quote_with_product_previews_with_quantity = QuoteWithProductPreviewsWithQuantity.from_request(request)
+    quote_repo.add_quote_with_product_previews_with_quantity(quote_with_product_previews_with_quantity)
 
     return ApiResponse(message="Quote added successfully.")
 
 @router.put("/quote/{quote_id}", response_model=ApiResponse)
 async def update_quote(
     quote_id: int,
-    quote: Quote,
+    request: QuoteWithProductPreviewsWithQuantityRequest,
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     is_admin(token_data)
-    quote_repo.update_quote(quote_id, quote)
+    quote_with_product_previews_with_quantity = QuoteWithProductPreviewsWithQuantity.from_request(request)
+    quote_repo.update_quote_with_product_previews_with_quantity(quote_id, quote_with_product_previews_with_quantity)
     return ApiResponse(message="Quote updated successfully.")
 
 @router.delete("/quote/{quote_id}", response_model=ApiResponse)
