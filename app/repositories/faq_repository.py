@@ -12,7 +12,7 @@ class FaqRepository:
             return self._faqs
 
         response = (
-            self._client.table("tbl_faq")
+            self._client.table("faqs")
             .select("id,question,answer")
             .order("id", desc=False)
             .execute()
@@ -25,7 +25,7 @@ class FaqRepository:
             self._next_id += 1
             return
 
-        self._client.table("tbl_faq").insert(
+        self._client.table("faqs").insert(
             {"question": question, "answer": answer}
         ).execute()
 
@@ -34,7 +34,7 @@ class FaqRepository:
             self._faqs = [faq for faq in self._faqs if faq.id != faq_id]
             return
 
-        self._client.table("tbl_faq").delete().eq("id", faq_id).execute()
+        self._client.table("faqs").delete().eq("id", faq_id).execute()
 
     def update_faq(self, faq_id: int, question: str, answer: str) -> None:
         if self._client is None:
@@ -46,6 +46,6 @@ class FaqRepository:
                     return
             return
 
-        self._client.table("tbl_faq").update(
+        self._client.table("faqs").update(
             {"question": question, "answer": answer}
         ).eq("id", faq_id).execute()

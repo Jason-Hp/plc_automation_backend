@@ -41,7 +41,7 @@ from app.models.api.response_models import (
 from app.models.api.request_models import (
     AccountCreationRequest,
     ApprovalRequest,
-    BlogUploadRequest,
+    BlogWithCategoriesRequest,
     CategoryRequest,
     ContactInfoRequest,
     CountryRequest,
@@ -289,26 +289,30 @@ async def delete_contact_info(
 
 @router.post("/blogs", response_model=ApiResponse)
 async def upload_blog(
-    blog: BlogUploadRequest,
-    categories: list[CategoryRequest],
+    request: BlogWithCategoriesRequest,
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     is_admin(token_data)
-    db_blog = BlogDb.model_validate({**blog.model_dump(), "categories": []})
-    db_categories = [CategoryDb.model_validate(c.model_dump()) for c in categories]
+    db_blog = BlogDb.model_validate({**request.model_dump(exclude={"categories"}), "categories": []})
+    db_categories = [
+        CategoryDb.model_validate(category.model_dump())
+        for category in request.categories
+    ]
     admin_blog_service.upload_blog(db_blog, db_categories)
     return ApiResponse(message="Blog uploaded successfully.")
 
 @router.put("/blogs/{blog_id}", response_model=ApiResponse)
 async def update_blog(
     blog_id: int,
-    blog: BlogUploadRequest,
-    categories: list[CategoryRequest],
+    request: BlogWithCategoriesRequest,
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     is_admin(token_data)
-    db_blog = BlogDb.model_validate({**blog.model_dump(), "categories": []})
-    db_categories = [CategoryDb.model_validate(c.model_dump()) for c in categories]
+    db_blog = BlogDb.model_validate({**request.model_dump(exclude={"categories"}), "categories": []})
+    db_categories = [
+        CategoryDb.model_validate(category.model_dump())
+        for category in request.categories
+    ]
     admin_blog_service.update_blog(blog_id, db_blog, db_categories)
     return ApiResponse(message="Blog updated successfully.")
 
@@ -650,4 +654,3 @@ async def reject_approval(
         approval_id=approval_id, rejector_email=email
     )
     
-

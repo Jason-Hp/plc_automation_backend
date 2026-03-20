@@ -7,7 +7,7 @@ from app.utils.supabase_client_util import get_supabase_client
 
 class ManufacturerRepository:
     """
-    Placeholder repository. Replace with SQL queries against tbl_manufacturer.
+    Placeholder repository. Replace with SQL queries against manufacturers.
     """
 
     def __init__(self) -> None:
@@ -29,7 +29,7 @@ class ManufacturerRepository:
             return self._manufacturers
 
         response = (
-            self._client.table("tbl_manufacturer")
+            self._client.table("manufacturers")
             .select("id,name")
             .order("id", desc=False)
             .execute()
@@ -44,7 +44,7 @@ class ManufacturerRepository:
             return None
 
         response = (
-            self._client.table("tbl_manufacturer")
+            self._client.table("manufacturers")
             .select("id,name")
             .eq("id", manufacturer_id)
             .limit(1)
@@ -61,7 +61,7 @@ class ManufacturerRepository:
             return None
 
         response = (
-            self._client.table("tbl_manufacturer")
+            self._client.table("manufacturers")
             .select("id,name")
             .ilike("name", name)
             .limit(1)
@@ -75,7 +75,7 @@ class ManufacturerRepository:
             self._manufacturers.append(manufacturer)
             return
 
-        self._client.table("tbl_manufacturer").insert(
+        self._client.table("manufacturers").insert(
             manufacturer.model_dump(exclude={"id"})
         ).execute()
 
@@ -87,7 +87,7 @@ class ManufacturerRepository:
                     return
             return
 
-        self._client.table("tbl_manufacturer").update(
+        self._client.table("manufacturers").update(
             manufacturer.model_dump(exclude={"id"})
         ).eq("id", manufacturer_id).execute()
             
@@ -98,5 +98,5 @@ class ManufacturerRepository:
             ]
             return
 
-        self._client.table("tbl_manufacturer").delete().eq("id", manufacturer_id).execute()
+        self._client.table("manufacturers").delete().eq("id", manufacturer_id).execute()
     

@@ -18,7 +18,7 @@ class CountryRepository:
             return self._countries
 
         response = (
-            self._client.table("tbl_country")
+            self._client.table("countries")
             .select("id,name,code")
             .order("id", desc=False)
             .execute()
@@ -33,7 +33,7 @@ class CountryRepository:
             return None
 
         response = (
-            self._client.table("tbl_country")
+            self._client.table("countries")
             .select("id,name,code")
             .eq("id", country_id)
             .limit(1)
@@ -50,7 +50,7 @@ class CountryRepository:
             return None
 
         response = (
-            self._client.table("tbl_country")
+            self._client.table("countries")
             .select("id,name,code")
             .ilike("code", code)
             .limit(1)
@@ -67,7 +67,7 @@ class CountryRepository:
             return None
 
         response = (
-            self._client.table("tbl_country")
+            self._client.table("countries")
             .select("id,name,code")
             .ilike("name", name)
             .limit(1)
@@ -81,7 +81,7 @@ class CountryRepository:
             self._countries.append(country)
             return
 
-        self._client.table("tbl_country").insert(
+        self._client.table("countries").insert(
             country.model_dump(exclude={"id"})
         ).execute()
 
@@ -93,7 +93,7 @@ class CountryRepository:
                     return
             return
 
-        self._client.table("tbl_country").update(
+        self._client.table("countries").update(
             country.model_dump(exclude={"id"})
         ).eq("id", country_id).execute()
             
@@ -106,19 +106,19 @@ class CountryRepository:
             }
             return
 
-        self._client.table("tbl_country").delete().eq("id", country_id).execute()
-        self._client.table("tbl_product_country_availability").delete().eq("country_id", country_id).execute()
+        self._client.table("countries").delete().eq("id", country_id).execute()
+        self._client.table("product_countries").delete().eq("country_id", country_id).execute()
 
     def get_product_availability_by_country(self, country_id: int, product_id: int) -> bool:
         """
         Check if a product is available in a given country, using a join table like:
-        tbl_product_country_availability (product_id, country_id).
+        product_countries (product_id, country_id).
         """
         if self._client is None:
             return (product_id, country_id) in self._product_country_map
 
         response = (
-            self._client.table("tbl_product_country_availability")
+            self._client.table("product_countries")
             .select("product_id,country_id")
             .eq("product_id", product_id)
             .eq("country_id", country_id)
@@ -142,7 +142,7 @@ class CountryRepository:
             return
 
         # Map country names to ids (case-insensitive).
-        response = self._client.table("tbl_country").select("id,name").execute()
+        response = self._client.table("countries").select("id,name").execute()
         rows = response.data or []
         name_to_id = {
             (r.get("name") or "").lower(): r.get("id")
@@ -158,7 +158,7 @@ class CountryRepository:
             insert_rows.append({"product_id": product_id, "country_id": cid})
 
         if insert_rows:
-            self._client.table("tbl_product_country_availability").insert(insert_rows).execute()
+            self._client.table("product_countries").insert(insert_rows).execute()
 
     def delete_all_product_availability_for_countries(self, product_id: int) -> None:
         # {RULE} Delete all entries in JOIN TABLE with product id {RULE}
@@ -171,7 +171,7 @@ class CountryRepository:
             }
             return
 
-        self._client.table("tbl_product_country_availability").delete().eq("product_id", product_id).execute()
+        self._client.table("product_countries").delete().eq("product_id", product_id).execute()
 
     def update_product_availability_for_countries(self, countries: list[str], product_id: int) -> None:
         # {RULE} Call delete_all_product_availability_for_countries, then call add_product_availability_for_countries {RULE}

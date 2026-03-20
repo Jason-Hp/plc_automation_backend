@@ -38,7 +38,7 @@ class QuoteProductRepository:
             return []
 
         products_resp = (
-            self._client.table("tbl_product")
+            self._client.table("products")
             .select("id,name,part_number,manufacturer_id,image_url")
             .in_("id", product_ids)
             .execute()
@@ -50,7 +50,7 @@ class QuoteProductRepository:
         manufacturers_map = {}
         if manufacturer_ids:
             manuf_resp = (
-                self._client.table("tbl_manufacturer")
+                self._client.table("manufacturers")
                 .select("id,name")
                 .in_("id", manufacturer_ids)
                 .execute()

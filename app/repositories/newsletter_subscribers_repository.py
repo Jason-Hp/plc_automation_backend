@@ -24,7 +24,7 @@ class NewsletterRepository:
             return email.lower() in self._subscribers
 
         response = (
-            self._client.table("tbl_newsletter_subscribers")
+            self._client.table("newsletter_subscribers")
             .select("id")
             .eq("email", email.lower())
             .limit(1)
@@ -39,7 +39,7 @@ class NewsletterRepository:
             return
 
         subscribed_date = datetime.now(pytz.timezone(settings.timezone)).isoformat()
-        self._client.table("tbl_newsletter_subscribers").upsert(
+        self._client.table("newsletter_subscribers").upsert(
             {"email": email.lower(), "subscribed_date": subscribed_date},
             on_conflict="email",
         ).execute()
@@ -50,7 +50,7 @@ class NewsletterRepository:
             return self._subscribers
 
         response = (
-            self._client.table("tbl_newsletter_subscribers")
+            self._client.table("newsletter_subscribers")
             .select("email")
             .execute()
         )

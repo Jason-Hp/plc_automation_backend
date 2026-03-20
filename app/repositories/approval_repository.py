@@ -11,7 +11,7 @@ from app.utils.supabase_client_util import get_supabase_client
 class ApprovalRepository:
     """
     Repository for managing approval requests.
-    Placeholder using in-memory list. Replace with SQL queries against tbl_approvals.
+    Placeholder using in-memory list. Replace with SQL queries against approvals.
     """
 
     def __init__(self) -> None:
@@ -23,7 +23,7 @@ class ApprovalRepository:
         """Create a new approval request."""
         if self._client is not None:
             row = approval.model_dump(exclude={"id"})
-            insert_resp = self._client.table("tbl_approvals").insert(row).execute()
+            insert_resp = self._client.table("approvals").insert(row).execute()
             inserted = (insert_resp.data or [])[:1]
             if inserted and inserted[0].get("id") is not None:
                 approval.id = inserted[0]["id"]
@@ -39,7 +39,7 @@ class ApprovalRepository:
         """Retrieve an approval by ID."""
         if self._client is not None:
             resp = (
-                self._client.table("tbl_approvals")
+                self._client.table("approvals")
                 .select("*")
                 .eq("id", approval_id)
                 .limit(1)
@@ -93,7 +93,7 @@ class ApprovalRepository:
         """
         if self._client is not None:
             base = (
-                self._client.table("tbl_approvals")
+                self._client.table("approvals")
                 .select("*")
             )
             if approval_id is not None:
@@ -111,7 +111,7 @@ class ApprovalRepository:
             start = (page - 1) * per_page
             end = start + per_page - 1
             slice_resp = (
-                self._client.table("tbl_approvals")
+                self._client.table("approvals")
                 .select("*")
             )
             if approval_id is not None:
@@ -153,7 +153,7 @@ class ApprovalRepository:
                 return False
             if approval.requester != deleter:
                 raise HTTPException(status_code=403, detail="Only the requester can delete this approval")
-            self._client.table("tbl_approvals").delete().eq("id", approval_id).execute()
+            self._client.table("approvals").delete().eq("id", approval_id).execute()
             return True
 
         for i, approval in enumerate(self._approvals):
@@ -168,7 +168,7 @@ class ApprovalRepository:
         """Mark an approval request as approved."""
         if self._client is not None:
             updated = (
-                self._client.table("tbl_approvals")
+                self._client.table("approvals")
                 .update({"is_approved": True})
                 .eq("id", approval_id)
                 .execute()
@@ -189,7 +189,7 @@ class ApprovalRepository:
         """Reject/delete an approval request."""
         if self._client is not None:
             updated = (
-                self._client.table("tbl_approvals")
+                self._client.table("approvals")
                 .update({"is_approved": False})
                 .eq("id", approval_id)
                 .execute()

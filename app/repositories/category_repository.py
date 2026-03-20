@@ -18,7 +18,7 @@ class CategoryRepository:
             return self._categories
 
         response = (
-            self._client.table("tbl_category")
+            self._client.table("categories")
             .select("id,name")
             .order("id", desc=False)
             .execute()
@@ -33,7 +33,7 @@ class CategoryRepository:
             return None
 
         response = (
-            self._client.table("tbl_category")
+            self._client.table("categories")
             .select("id,name")
             .eq("id", category_id)
             .limit(1)
@@ -45,7 +45,7 @@ class CategoryRepository:
     def add_categories_to_blog(self, blog_id: int, categories: list[Category]) -> None:
         """
         Associate a set of categories with a blog via a JOIN table
-        (e.g. tbl_blog_category with blog_id, category_id).
+        (e.g. blogs_categories with blog_id, category_id).
         """
         if self._client is None:
             self._blog_categories[blog_id] = categories
@@ -57,7 +57,7 @@ class CategoryRepository:
             if c.id is not None
         ]
         if insert_rows:
-            self._client.table("tbl_blog_category").insert(insert_rows).execute()
+            self._client.table("blogs_categories").insert(insert_rows).execute()
 
     def delete_all_categories_from_blog(self, blog_id: int) -> None:
         """
@@ -67,7 +67,7 @@ class CategoryRepository:
             self._blog_categories.pop(blog_id, None)
             return
 
-        self._client.table("tbl_blog_category").delete().eq("blog_id", blog_id).execute()
+        self._client.table("blogs_categories").delete().eq("blog_id", blog_id).execute()
 
     def update_categories_of_blog(self, blog_id: int, categories: list[Category]) -> None:
         """
@@ -89,7 +89,7 @@ class CategoryRepository:
             return None
 
         response = (
-            self._client.table("tbl_category")
+            self._client.table("categories")
             .select("id,name")
             .ilike("name", name)
             .limit(1)
@@ -103,7 +103,7 @@ class CategoryRepository:
             self._categories.append(category)
             return
 
-        self._client.table("tbl_category").insert(
+        self._client.table("categories").insert(
             category.model_dump(exclude={"id"})
         ).execute()
 
@@ -115,7 +115,7 @@ class CategoryRepository:
                     return
             return
 
-        self._client.table("tbl_category").update(
+        self._client.table("categories").update(
             category.model_dump(exclude={"id"})
         ).eq("id", category_id).execute()
 
@@ -124,5 +124,5 @@ class CategoryRepository:
             self._categories = [category for category in self._categories if category.id != category_id]
             return
 
-        self._client.table("tbl_category").delete().eq("id", category_id).execute()
-        self._client.table("tbl_blog_category").delete().eq("category_id", category_id).execute()
+        self._client.table("categories").delete().eq("id", category_id).execute()
+        self._client.table("blogs_categories").delete().eq("category_id", category_id).execute()
