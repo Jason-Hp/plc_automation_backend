@@ -590,10 +590,8 @@ async def get_admin_logs(log_type: str,
 
 @router.get("/approvals", response_model=ApprovalResponse)
 async def get_all_approvals(
+    approval: ApprovalRequest,
     token_data: dict = Depends(verify_token),
-    approval_id: Optional[int] = None,
-    approval_type: Optional[str] = None,
-    is_approved: Optional[bool] = None,
     page: int = Query(1, ge=1),
     per_page: int = Query(10, ge=1, le=100)
 ) -> ApprovalResponse:
@@ -601,9 +599,9 @@ async def get_all_approvals(
     requester_email = token_data.get("email") if user_role != UserRole.ADMIN else None
     return admin_approvals_service.list_approvals(
         requester_email=requester_email,
-        approval_id=approval_id,
-        approval_type=approval_type,
-        is_approved=is_approved,
+        approval_id=approval.id,
+        approval_type=approval.type,
+        is_approved=approval.is_approved,
         page=page,
         per_page=per_page,
     )
