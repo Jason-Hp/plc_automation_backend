@@ -5,7 +5,7 @@ import datetime
 from fastapi import HTTPException, UploadFile
 
 from app.config import settings
-from app.models.api.request_models import ApprovalRequest
+from app.models.api.request_models import ApprovalListRequest, ApprovalRequest
 from app.models.api.response_models import (
     ApiResponse,
     ApprovalPreviewDataResponse,
@@ -31,19 +31,15 @@ class AdminApprovalsService:
         self,
         *,
         requester_email: str | None,
-        approval_id: int | None,
-        approval_type: str | None,
-        is_approved: bool | None,
-        page: int,
-        per_page: int,
+        request: ApprovalListRequest,
     ) -> ApprovalResponse:
         approvals, total = self._approval_repo.get_approvals(
-            approval_id=approval_id,
-            approval_type=approval_type,
-            is_approved=is_approved,
+            approval_id=request.approval_id,
+            approval_type=request.approval_type,
+            is_approved=request.is_approved,
             requester=requester_email,
-            page=page,
-            per_page=per_page,
+            page=request.page,
+            per_page=request.per_page,
         )
 
         approvals_dto = [
@@ -58,7 +54,10 @@ class AdminApprovalsService:
             for a in approvals
         ]
         return ApprovalResponse(
-            page=page, per_page=per_page, total=total, approvals=approvals_dto
+            page=request.page,
+            per_page=request.per_page,
+            total=total,
+            approvals=approvals_dto,
         )
 
     async def add_approval(

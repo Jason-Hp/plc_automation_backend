@@ -144,6 +144,14 @@ class JobUploadRequest(BaseModel):
     working_hours: str
 
 
+class ApprovalListRequest(BaseModel):
+    approval_id: Optional[int] = None
+    approval_type: Optional[str] = None
+    is_approved: Optional[bool] = None
+    page: int = Field(1, ge=1)
+    per_page: int = Field(10, ge=1, le=100)
+
+
 class ApprovalRequest(BaseModel):
     id: Optional[int] = None
     type: str

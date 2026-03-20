@@ -1628,7 +1628,16 @@ Environment variables are loaded from `.env` via `app/config.py`.
 }
 ```
 
-### GET `/api/admin/approvals?approval_id=<optional>&approval_type=<optional>&is_approved=<optional>&page=1&per_page=10`
+### GET `/api/admin/approvals`
+Uses a single query request model with these optional fields:
+- `approval_id`
+- `approval_type`
+- `is_approved`
+- `page` (default: `1`)
+- `per_page` (default: `10`, max: `100`)
+
+Example: `/api/admin/approvals?approval_type=UPDATE-Product&page=1&per_page=10`
+
 **Headers**
 ```json
 {
@@ -1638,9 +1647,15 @@ Environment variables are loaded from `.env` via `app/config.py`.
 }
 ```
 
-**Request body**
+**Request model (`ApprovalListRequest`)**
 ```json
-{}
+{
+  "approval_id": 1,
+  "approval_type": "UPDATE-Product",
+  "is_approved": false,
+  "page": 1,
+  "per_page": 10
+}
 ```
 
 **Response 200**
