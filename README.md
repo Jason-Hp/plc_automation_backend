@@ -12,6 +12,28 @@ All endpoints below are under `/api`.
 
 ---
 
+## Architecture (Layering)
+
+This backend follows a clear separation of concerns:
+- API routes act as the controller layer (they accept/return API request/response DTOs).
+- Business logic lives in services.
+- Data access lives in repositories (Supabase-backed when credentials are configured, otherwise in-memory fallbacks).
+
+## Supabase / Environment Setup
+
+This backend is Supabase-ready. Supabase-backed repositories (products, quotes, blogs, etc.) use:
+- `SUPABASE_URL`
+- `SUPABASE_KEY`
+
+If either `SUPABASE_URL` or `SUPABASE_KEY` is left empty, the app will fall back to in-memory repositories (useful before you fill credentials).
+
+Semantic search uses:
+- `OPENAI_API_KEY`
+
+Environment variables are loaded from `.env` via `app/config.py`.
+
+---
+
 ## Health Route
 
 ### GET `/api/health`
@@ -1406,31 +1428,13 @@ All endpoints below are under `/api`.
   "page": 1,
   "per_page": 10,
   "total": 1,
-  "quotes": [
+  "quote_previews": [
     {
-      "id": 1,
       "name": "John Doe",
       "company_name": "ACME Industrial",
-      "country_code": "65",
-      "phone": "98765432",
-      "email": "john@acme.com",
-      "message": "Need quote",
       "created_at": "2026-01-01T00:00:00+00:00",
       "is_paid": false,
-      "total_amount": 0,
-      "product_previews_with_quantity": [
-        {
-          "id": 1,
-          "name": "SIMATIC S7-1500 CPU",
-          "part_number": "CPU-1510",
-          "manufacturer": {
-            "id": 1,
-            "name": "Siemens"
-          },
-          "image_url": "https://cdn.example.com/products/cpu-1510.jpg",
-          "quantity": 2
-        }
-      ]
+      "total_amount": 0
     }
   ]
 }
@@ -1454,29 +1458,31 @@ All endpoints below are under `/api`.
 **Response 200**
 ```json
 {
-  "id": 1,
-  "name": "John Doe",
-  "company_name": "ACME Industrial",
-  "country_code": "65",
-  "phone": "98765432",
-  "email": "john@acme.com",
-  "message": "Need quote",
-  "created_at": "2026-01-01T00:00:00+00:00",
-  "is_paid": false,
-  "total_amount": 0,
-  "product_previews_with_quantity": [
-    {
-      "id": 1,
-      "name": "SIMATIC S7-1500 CPU",
-      "part_number": "CPU-1510",
-      "manufacturer": {
+  "quote_with_product_previews_with_quantity": {
+    "id": 1,
+    "name": "John Doe",
+    "company_name": "ACME Industrial",
+    "country_code": "65",
+    "phone": "98765432",
+    "email": "john@acme.com",
+    "message": "Need quote",
+    "created_at": "2026-01-01T00:00:00+00:00",
+    "is_paid": false,
+    "total_amount": 0,
+    "product_previews_with_quantity": [
+      {
         "id": 1,
-        "name": "Siemens"
-      },
-      "image_url": "https://cdn.example.com/products/cpu-1510.jpg",
-      "quantity": 2
-    }
-  ]
+        "name": "SIMATIC S7-1500 CPU",
+        "part_number": "CPU-1510",
+        "manufacturer": {
+          "id": 1,
+          "name": "Siemens"
+        },
+        "image_url": "https://cdn.example.com/products/cpu-1510.jpg",
+        "quantity": 2
+      }
+    ]
+  }
 }
 ```
 

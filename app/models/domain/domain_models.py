@@ -1,11 +1,32 @@
 from __future__ import annotations
 
-from typing import List, Optional 
+from typing import Any, List, Optional 
 
 from pydantic import BaseModel, Field
 
-from app.models.api.request_models import QuoteWithProductPreviewsWithQuantityRequest
-from app.models.db.data_models import Manufacturer, Category, Product, Quote, Quote
+#
+# Domain models must not import from API request/response models or DB models.
+# These are business-level shapes used internally by services/controllers.
+#
+
+
+class Manufacturer(BaseModel):
+    id: Optional[int] = None
+    name: str
+
+
+class Category(BaseModel):
+    id: Optional[int] = None
+    name: str
+
+
+class Product(BaseModel):
+    id: Optional[int] = None
+    name: str
+    part_number: str
+    manufacturer: Manufacturer
+    image_url: Optional[str] = None
+    description: Optional[str] = None
 
 class ProductPreview(BaseModel):
     id: Optional[int]
@@ -59,8 +80,12 @@ class QuotePreview(BaseModel):
     total_amount: Optional[int] = 0
 
     @classmethod
-    def from_quote(cls, quote: Quote) -> QuotePreview:
-        return cls.model_validate(quote.model_dump())
+    def from_quote(cls, quote: BaseModel | dict[str, Any]) -> QuotePreview:
+        """
+        Build from a Quote-like object (e.g. DB model) without importing DB types.
+        """
+        data = quote.model_dump() if isinstance(quote, BaseModel) else quote
+        return cls.model_validate(data)
 
 class QuoteWithProductPreviewsWithQuantity(BaseModel):
     # Quote table fields
@@ -80,8 +105,12 @@ class QuoteWithProductPreviewsWithQuantity(BaseModel):
     product_previews_with_quantity: list[ProductPreviewWithQuantity]
 
     @classmethod
-    def from_request(cls, request: QuoteWithProductPreviewsWithQuantityRequest):
-        return cls.model_validate(request.model_dump())
+    def from_request(cls, request: BaseModel | dict[str, Any]) -> QuoteWithProductPreviewsWithQuantity:
+        """
+        Build from a request-like object without importing API request types.
+        """
+        data = request.model_dump() if isinstance(request, BaseModel) else request
+        return cls.model_validate(data)
 
 class ProductWithStock(BaseModel):
     product: Product

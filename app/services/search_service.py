@@ -2,9 +2,11 @@ from app.models.domain.domain_models import ProductPreview
 from app.models.db.data_models import Manufacturer
 from openai import OpenAI
 import tiktoken
-from supabase import Client, create_client
 import re
 import os
+from supabase import Client
+
+from app.utils.supabase_client_util import get_supabase_client
 
 
 class SearchService:
@@ -13,7 +15,8 @@ class SearchService:
         self.client = OpenAI(api_key=openai_api_key)
         self.embedding_model = "text-embedding-3-small"
         self.tokenizer = tiktoken.get_encoding("cl100k_base")
-        self.supabase: Client = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_KEY"))
+        # Lazy: allows the service to exist before `.env` is populated.
+        self.supabase: Client | None = get_supabase_client()
         pass
 
     def _get_token_chunks(self, text: str, chunk_size: int=500, overlap: int=50) -> list[str]:
@@ -30,6 +33,8 @@ class SearchService:
         return self.client.embeddings.create(input=text, model=self.embedding_model).data[0].embedding
 
     def _vector_search(self, query_embedding: list[float], top_k: int=10):
+        if self.supabase is None:
+            raise RuntimeError("Supabase is not configured. Set `supabase_url`/`supabase_key` in .env.")
         response = self.supabase.rpc(
             'match_embeddings',
             {

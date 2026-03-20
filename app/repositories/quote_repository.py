@@ -2,12 +2,11 @@ from __future__ import annotations
 
 import pytz
 
-from copy import deepcopy
 from datetime import datetime, timezone
 
 from app.models.db.data_models import Quote
 from app.config import settings
-from app.models.domain.domain_models import QuoteWithProductPreviewsWithQuantity
+from app.utils.supabase_client_util import get_supabase_client
 
 
 class QuoteRepository:
@@ -17,65 +16,106 @@ class QuoteRepository:
     2) quote_products join table
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._quote_table: dict[int, Quote] = {}
-        self._quote_products_table: list[dict[str, int]] = []
         self._next_quote_id = 1
+        self._client = get_supabase_client()
 
-    def get_all_quotes(self, search: str, page: int, per_page: int):
-        # {RULE} Get all quotes entity {RULE}
-        all_quotes = [self._hydrate_quote(quote_id) for quote_id in self._quote_table]
+    def _matches_search(self, quote: Quote, normalized_search: str) -> bool:
+        fields = [
+            quote.name,
+            quote.company_name,
+            quote.email,
+            quote.phone,
+            quote.message,
+            quote.country_code,
+        ]
+        return any(f and normalized_search in f.lower() for f in fields)
 
-        normalized_search = search.strip().lower() if search else ""
-        if normalized_search:
-            all_quotes = [
-                quote for quote in all_quotes
-                if self._matches_search(quote, normalized_search)
-            ]
+    def get_all_quotes(self, search: str, page: int, per_page: int) -> tuple[list[Quote], int]:
+        if self._client is None:
+            all_quotes = list(self._quote_table.values())
 
-        total = len(all_quotes)
+            normalized_search = search.strip().lower() if search else ""
+            if normalized_search:
+                all_quotes = [q for q in all_quotes if self._matches_search(q, normalized_search)]
+
+            total = len(all_quotes)
+            start = (page - 1) * per_page
+            end = start + per_page
+            return all_quotes[start:end], total
+
+        query = (
+            self._client.table("tbl_quotes")
+            .select("*")
+        )
+        if search:
+            query = query.ilike("name", f"%{search}%")
+
+        total_resp = query.execute()
+        total = len(total_resp.data or [])
+
         start = (page - 1) * per_page
-        end = start + per_page
+        end = start + per_page - 1
+        slice_resp = query.order("id", desc=False).range(start, end).execute()
+        return [Quote.model_validate(r) for r in (slice_resp.data or [])], total
 
-        return all_quotes[start:end], total
+    def get_quote_by_id(self, quote_id: int) -> Quote:
+        if self._client is None:
+            if quote_id not in self._quote_table:
+                raise KeyError(quote_id)
+            return self._quote_table[quote_id]
 
-    def get_quote_with_product_previews_with_quantity_by_id(self, id: int) -> QuoteWithProductPreviewsWithQuantity:
-        # {RULE} Get quote entity and get all products associated with the quote from the join table, with the quantity from the join table as well{RULE}
-        return self._hydrate_quote(id)
+        resp = (
+            self._client.table("tbl_quotes")
+            .select("*")
+            .eq("id", quote_id)
+            .limit(1)
+            .execute()
+        )
+        rows = resp.data or []
+        if not rows:
+            raise KeyError(quote_id)
+        return Quote.model_validate(rows[0])
 
-    def add_quote_with_product_previews_with_quantity(self, quote_with_product_previews_with_quantity: QuoteWithProductPreviewsWithQuantity) -> int:
-        # {RULE} Add quote entity to quote table and add entries to join table for associated products with their quantities {RULE}
+    def add_quote(self, quote: Quote) -> int:
         quote_id = self._next_quote_id
         self._next_quote_id += 1
 
-        # Simulate quote entity/table persistence basically quote entity has everything quote has but not the product preview list (that belongs to the join table)
-        quote_entity = quote.model_copy(deep=True)
-        quote_entity.id = quote_id
-        quote_entity.created_at = quote_entity.created_at or datetime.now(pytz.timezone(settings.timezone)).isoformat()
-        self._quote_table[quote_id] = quote_entity
+        if self._client is None:
+            quote_entity = quote.model_copy(deep=True)
+            quote_entity.id = quote_id
+            quote_entity.created_at = quote_entity.created_at or datetime.now(pytz.timezone(settings.timezone)).isoformat()
+            self._quote_table[quote_id] = quote_entity
+            return quote_id
 
-        # Simulate quote_products join table persistence
-        self.add_products_to_quote(quote_id, quote_entity.product_previews_with_quantity)
+        row = quote.model_dump(exclude={"id"})
+        insert_resp = self._client.table("tbl_quotes").insert(row).execute()
+        inserted = (insert_resp.data or [])[:1]
+        if inserted and inserted[0].get("id") is not None:
+            return inserted[0]["id"]
         return quote_id
 
-    def update_quote_with_product_previews_with_quantity(self, id: int, quote_with_product_previews_with_quantity: QuoteWithProductPreviewsWithQuantity) -> None:
-        # {RULE} Update quote and join table, by first deleting all of quote_id entries in JOIN table, then replacing current quote in db with updated quote, then updating join table accordingly {RULE}
-        if id not in self._quote_table:
+    def update_quote(self, quote: Quote) -> None:
+        if self._client is None:
+            if quote.id is None or quote.id not in self._quote_table:
+                return
+
+            updated_quote = quote.model_copy(deep=True)
+            # Preserve created_at if caller didn't provide it.
+            updated_quote.created_at = updated_quote.created_at or self._quote_table[quote.id].created_at
+            self._quote_table[quote.id] = updated_quote
             return
 
-        updated_quote = quote.model_copy(deep=True)
-        updated_quote.id = id
-        updated_quote.created_at = updated_quote.created_at or self._quote_table[id].created_at
+        if quote.id is None:
+            return
+        self._client.table("tbl_quotes").update(
+            quote.model_dump(exclude={"id"})
+        ).eq("id", quote.id).execute()
 
-        self._quote_table[id] = updated_quote
-        self.update_products_to_quote(id, updated_quote.product_previews_with_quantity)
-
-    def delete_quote(self, id: int) -> None:
-        # {RULE} Del entries in JOIN TABLE FIRST, then delete quote entry {RULE}
-        if id not in self._quote_table:
+    def delete_quote(self, quote_id: int) -> None:
+        if self._client is None:
+            self._quote_table.pop(quote_id, None)
             return
 
-        self._quote_table.pop(id, None)
-        self.delete_all_products_from_quote(id)
-
-  
+        self._client.table("tbl_quotes").delete().eq("id", quote_id).execute()

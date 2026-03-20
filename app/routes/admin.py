@@ -14,25 +14,60 @@ from fastapi.responses import FileResponse, RedirectResponse
 
 from pydantic import ValidationError
 
-from app.models.db.data_models import Product, Quote
-from app.models.api.response_models import ApiResponse, QuoteListResponse, QuotePreviewListResponse, QuoteWithProductPreviewsResponse, QuoteWithProductPreviewsWithQuantityResponse
-from app.models.api.request_models import ProductRequest, ProductWithCountriesRequest, QuoteRequest, QuoteWithProductPreviewsWithQuantityRequest
+from app.models.db.data_models import (
+    Approval as ApprovalDb,
+    Blog as BlogDb,
+    Category as CategoryDb,
+    ContactInfo as ContactInfoDb,
+    Country as CountryDb,
+    FAQ as FAQDb,
+    Job as JobDb,
+    Product,
+    Manufacturer as ManufacturerDb,
+)
+from app.models.api.response_models import (
+    ApiResponse,
+    ApprovalResponse,
+    ApprovalPreviewDataResponse,
+    BatchProductUploadResultResponse,
+    QuoteListResponse,
+    QuotePreviewResponse,
+    QuoteWithProductPreviewsWithQuantityResponse,
+    QuoteWithProductPreviewsWithQuantityDataResponse,
+    UserInfoResponse,
+    ProductPreviewWithQuantityResponse,
+    ManufacturerResponse,
+)
+from app.models.api.request_models import (
+    AccountCreationRequest,
+    ApprovalRequest,
+    BlogUploadRequest,
+    CategoryRequest,
+    ContactInfoRequest,
+    CountryRequest,
+    FAQRequest,
+    JobUploadRequest,
+    ManufacturerRequest,
+    ProductWithCountriesRequest,
+    QuoteWithProductPreviewsWithQuantityRequest,
+)
 from app.config import settings
-from app.models.domain.domain_models import QuotePreview, QuoteWithProductPreviewsWithQuantity
 from app.services.log_service import LogService
 from app.dependencies import (
-    blog_repo,
-    category_repo,
-    contact_info_repo,
-    country_repo,
+    admin_blog_service,
+    admin_catalog_service,
+    admin_products_service,
+    admin_newsletter_service,
+    admin_approvals_service,
+    admin_faq_service,
+    admin_job_service,
     email_service,
-    faq_repo,
-    job_repo,
     jwt_service,
     manufacturer_repo,
     newsletter_repo,
     product_repo,
-    quote_repo,
+    quotes_service,
+    country_repo,
     approval_repo,
     storage_service,
     supabase_service
@@ -67,12 +102,12 @@ async def is_admin(token_data: dict) -> bool:
         return True
     raise HTTPException(status_code=403, detail="Admin privileges required.")
     
-@router.get("/user-info", response_model=UserInfo)
-async def get_user_info(token_data: dict = Depends(verify_token)) -> UserInfo:
+@router.get("/user-info", response_model=UserInfoResponse)
+async def get_user_info(token_data: dict = Depends(verify_token)) -> UserInfoResponse:
     user_role = get_user_role(token_data)
     uuid = token_data.get("sub")
     email = token_data.get("email")
-    return UserInfo(uuid=uuid, email=email, user_role=user_role.value)
+    return UserInfoResponse(uuid=uuid, email=email, user_role=user_role.value)
 
 @router.post("/account", response_model=ApiResponse)
 async def create_account(accountCreationRequest: AccountCreationRequest, token_data: dict = Depends(verify_token)) -> ApiResponse:
@@ -118,11 +153,11 @@ async def create_account(accountCreationRequest: AccountCreationRequest, token_d
 
 # TODO: refactor
 # This is a batch upload and/or update using CSV
-@router.post("/products/batch", response_model=BatchProductUploadResult)
+@router.post("/products/batch", response_model=BatchProductUploadResultResponse)
 async def upload_offer_products(
     csv_file: UploadFile = File(...),
     token_data: dict = Depends(verify_token)
-) -> BatchProductUploadResult:
+) -> BatchProductUploadResultResponse:
     is_admin(token_data)
 
     if not csv_file.filename.endswith(".csv"):
@@ -149,7 +184,7 @@ async def upload_offer_products(
             }
         )
     )
-    return BatchProductUploadResult(processed=processed, message="CSV processed (placeholder).")
+    return BatchProductUploadResultResponse(processed=processed, message="CSV processed (placeholder).")
 
 @router.post("/products", response_model=ApiResponse)
 async def upload_product(
@@ -157,23 +192,18 @@ async def upload_product(
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     is_admin(token_data)
-
-    product = Product.model_validate(request)
-    product_repo.add_product(product)
-    country_repo.add_product_availability_for_countries(request.countries, product.id)
-
-    return ApiResponse(message="Product uploaded successfully.")
+    return admin_products_service.add_product(request=request)
 
 @router.put("/products/{product_id}", response_model=ApiResponse)
 async def update_product(
+    product_id: int,
     request: ProductWithCountriesRequest,
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     is_admin(token_data)
-    product = Product.model_validate(request)
-    product_repo.update_product(product)
-    country_repo.update_product_availability_for_countries(request.countries, product.id)
-    return ApiResponse(message="Product updated successfully.")
+    return admin_products_service.update_product(
+        product_id=product_id, request=request
+    )
 
 
 @router.delete("/products/{product_id}", response_model=ApiResponse)
@@ -182,9 +212,7 @@ async def delete_product(
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     is_admin(token_data)
-    product_repo.delete_product(product_id)
-    country_repo.delete_all_product_availability_for_countries(product_id)
-    return ApiResponse(message="Product deleted successfully.") 
+    return admin_products_service.delete_product(product_id=product_id)
 
 @router.post("/broadcast-newsletter", response_model=ApiResponse)
 async def broadcast_newsletter(
@@ -193,65 +221,31 @@ async def broadcast_newsletter(
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     is_admin(token_data)
-    try:
-        parsed_payload = NewsLetterContentRequest.model_validate_json(payload)
-    except ValidationError as exc:
-        raise HTTPException(status_code=422, detail=json.loads(exc.json())) from exc
-
-    subscribers = newsletter_repo.get_all_subscribers()
-    cc_addrs = list(subscribers)
-
-    email_attachments = None
-
-    if attachments:
-        email_attachments = []
-        for attachment in attachments:
-            email_attachments.append(
-                (attachment.filename, await attachment.read(), attachment.content_type or "application/octet-stream")
-            )
-
-    email_service.send(
-        parsed_payload.subject,
-        parsed_payload.content,
-        email_service.smtp_from,
-        cc_addrs,
-        email_attachments
+    actor_email = token_data.get("email")
+    return await admin_newsletter_service.broadcast_newsletter(
+        payload=payload,
+        attachments=attachments,
+        actor_email=actor_email,
     )
-
-    LogService.ADMIN.log(
-        json.dumps(
-            {
-                "event": "ADMIN_NEWSLETTER_BROADCASTED",
-                "actor": token_data.get("email"),
-                "subject": parsed_payload.subject,
-                "recipients": len(cc_addrs),
-                "attachments": len(email_attachments) if email_attachments else 0,
-            }
-        )
-    )
-    return ApiResponse(message="Newsletter broadcasted.")
 
 @router.post("/faqs", response_model=ApiResponse)
 async def upload_faqs(
-    faqs: list[FAQ],
+    faqs: list[FAQRequest],
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     is_admin(token_data)
-    # Able to do batching here (But not needed as adding FAQs is not frequent or big)
-    for faq in faqs:
-        faq_repo.add_faq(faq.question, faq.answer)
-
+    db_faqs = [FAQDb.model_validate(f.model_dump()) for f in faqs]
+    admin_faq_service.upload_faqs(db_faqs)
     return ApiResponse(message="FAQs uploaded successfully.")
 
 @router.put("/faqs/{faq_id}", response_model=ApiResponse)
 async def update_faq(
     faq_id: int,
-    faq: FAQ,
+    faq: FAQRequest,
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     is_admin(token_data)
-    faq_repo.update_faq(faq_id, faq.question, faq.answer)
-
+    admin_faq_service.update_faq(faq_id, question=faq.question, answer=faq.answer)
     return ApiResponse(message="FAQ updated successfully.")
 
 @router.delete("/faqs/{faq_id}", response_model=ApiResponse)
@@ -260,29 +254,28 @@ async def delete_faq(
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     is_admin(token_data)
-    faq_repo.delete_faq(faq_id)
-
+    admin_faq_service.delete_faq(faq_id)
     return ApiResponse(message="FAQ deleted successfully.")
 
 @router.post("/contact-info", response_model=ApiResponse)
 async def upload_contact_info(
-    contact_info: ContactInfo,
+    contact_info: ContactInfoRequest,
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     is_admin(token_data)
-    contact_info_repo.add_contact_info(contact_info)
-
+    admin_catalog_service.upload_contact_info(contact_info)
     return ApiResponse(message="Contact info uploaded successfully.")
 
 @router.put("/contact-info/{contact_id}", response_model=ApiResponse)
 async def update_contact_info(
     contact_id: int,
-    contact_info: ContactInfo,
+    contact_info: ContactInfoRequest,
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     is_admin(token_data)
-    contact_info_repo.update_contact_info(contact_id, contact_info)
-
+    admin_catalog_service.update_contact_info(
+        contact_id=contact_id, contact_info=contact_info
+    )
     return ApiResponse(message="Contact info updated successfully.")
 
 @router.delete("/contact-info/{contact_id}", response_model=ApiResponse)
@@ -291,32 +284,32 @@ async def delete_contact_info(
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     is_admin(token_data)
-    contact_info_repo.delete_contact_info(contact_id)
-
+    admin_catalog_service.delete_contact_info(contact_id)
     return ApiResponse(message="Contact info deleted successfully.")
 
 @router.post("/blogs", response_model=ApiResponse)
 async def upload_blog(
-    blog: Blog,
-    categories: list[Category],
+    blog: BlogUploadRequest,
+    categories: list[CategoryRequest],
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     is_admin(token_data)
-    blog = blog_repo.add_blog(blog)
-    category_repo.add_categories_to_blog(blog.id, categories)
+    db_blog = BlogDb.model_validate({**blog.model_dump(), "categories": []})
+    db_categories = [CategoryDb.model_validate(c.model_dump()) for c in categories]
+    admin_blog_service.upload_blog(db_blog, db_categories)
     return ApiResponse(message="Blog uploaded successfully.")
 
 @router.put("/blogs/{blog_id}", response_model=ApiResponse)
 async def update_blog(
     blog_id: int,
-    blog: Blog,
-    categories: list[Category],
+    blog: BlogUploadRequest,
+    categories: list[CategoryRequest],
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     is_admin(token_data)
-    blog_repo.update_blog(blog_id, blog)
-    category_repo.update_categories_of_blog(blog_id, categories)
-
+    db_blog = BlogDb.model_validate({**blog.model_dump(), "categories": []})
+    db_categories = [CategoryDb.model_validate(c.model_dump()) for c in categories]
+    admin_blog_service.update_blog(blog_id, db_blog, db_categories)
     return ApiResponse(message="Blog updated successfully.")
 
 @router.delete("/blogs/{blog_id}", response_model=ApiResponse)
@@ -325,30 +318,28 @@ async def delete_blog(
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     is_admin(token_data)
-    blog_repo.delete_blog(blog_id)
-    category_repo.delete_all_categories_from_blog(blog_id)
-
+    admin_blog_service.delete_blog(blog_id)
     return ApiResponse(message="Blog deleted successfully.")
 
 @router.post("/jobs", response_model=ApiResponse)
 async def upload_job(
-    job: Job,
+    job: JobUploadRequest,
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     is_admin(token_data)
-    job_repo.add_job(job)
-
+    admin_job_service.upload_job(JobDb.model_validate(job.model_dump()))
     return ApiResponse(message="Job uploaded successfully.")
 
 @router.put("/jobs/{job_id}", response_model=ApiResponse)
 async def update_job(
     job_id: int,
-    job: Job,
+    job: JobUploadRequest,
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     is_admin(token_data)
-    job_repo.update_job(job_id, job)
-
+    admin_job_service.update_job(
+        job_id=job_id, job=JobDb.model_validate(job.model_dump())
+    )
     return ApiResponse(message="Job updated successfully.")
 
 @router.delete("/jobs/{job_id}", response_model=ApiResponse)
@@ -357,29 +348,28 @@ async def delete_job(
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     is_admin(token_data)
-    job_repo.delete_job(job_id)
-
+    admin_job_service.delete_job(job_id)
     return ApiResponse(message="Job deleted successfully.")
 
 @router.post("/categories", response_model=ApiResponse)
 async def upload_category(
-    category: Category,
+    category: CategoryRequest,
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     is_admin(token_data)
-    category_repo.add_category(category)
-
+    admin_catalog_service.add_category(CategoryDb.model_validate(category.model_dump()))
     return ApiResponse(message="Category uploaded successfully.")
 
 @router.put("/categories/{category_id}", response_model=ApiResponse)
 async def update_category(
     category_id: int,
-    category: Category,
+    category: CategoryRequest,
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     is_admin(token_data)
-    category_repo.update_category(category_id, category)
-
+    admin_catalog_service.update_category(
+        category_id=category_id, category=CategoryDb.model_validate(category.model_dump())
+    )
     return ApiResponse(message="Category updated successfully.")
 
 @router.delete("/categories/{category_id}", response_model=ApiResponse)
@@ -388,29 +378,31 @@ async def delete_category(
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     is_admin(token_data)
-    category_repo.delete_category(category_id)
-
+    admin_catalog_service.delete_category(category_id)
     return ApiResponse(message="Category deleted successfully.")
 
 @router.post("/manufacturers", response_model=ApiResponse)
 async def upload_manufacturer(
-    manufacturer: Manufacturer,
+    manufacturer: ManufacturerRequest,
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     is_admin(token_data)
-    manufacturer_repo.add_manufacturer(manufacturer)
-
+    admin_catalog_service.add_manufacturer(
+        ManufacturerDb.model_validate(manufacturer.model_dump())
+    )
     return ApiResponse(message="Manufacturer uploaded successfully.")
 
 @router.put("/manufacturers/{manufacturer_id}", response_model=ApiResponse)
 async def update_manufacturer(
     manufacturer_id: int,
-    manufacturer: Manufacturer,
+    manufacturer: ManufacturerRequest,
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     is_admin(token_data)
-    manufacturer_repo.update_manufacturer(manufacturer_id, manufacturer)
-
+    admin_catalog_service.update_manufacturer(
+        manufacturer_id=manufacturer_id,
+        manufacturer=ManufacturerDb.model_validate(manufacturer.model_dump()),
+    )
     return ApiResponse(message="Manufacturer updated successfully.")
 
 @router.delete("/manufacturers/{manufacturer_id}", response_model=ApiResponse)
@@ -419,29 +411,31 @@ async def delete_manufacturer(
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     is_admin(token_data)
-    manufacturer_repo.delete_manufacturer(manufacturer_id)
-
+    admin_catalog_service.delete_manufacturer(manufacturer_id)
     return ApiResponse(message="Manufacturer deleted successfully.")
 
 @router.post("/countries", response_model=ApiResponse)
 async def upload_country(
-    country: Country,
+    country: CountryRequest,
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     is_admin(token_data)
-    country_repo.add_country(country)
-
+    admin_catalog_service.add_country(
+        CountryDb.model_validate(country.model_dump())
+    )
     return ApiResponse(message="Country uploaded successfully.")
 
 @router.put("/countries/{country_id}", response_model=ApiResponse)
 async def update_country(
     country_id: int,
-    country: Country,
+    country: CountryRequest,
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     is_admin(token_data)
-    country_repo.update_country(country_id, country)
-
+    admin_catalog_service.update_country(
+        country_id=country_id,
+        country=CountryDb.model_validate(country.model_dump()),
+    )
     return ApiResponse(message="Country updated successfully.")
 
 @router.delete("/countries/{country_id}", response_model=ApiResponse)
@@ -450,8 +444,7 @@ async def delete_country(
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     is_admin(token_data)
-    country_repo.delete_country(country_id)
-
+    admin_catalog_service.delete_country(country_id)
     return ApiResponse(message="Country deleted successfully.")
 
 
@@ -462,18 +455,64 @@ async def get_all_quotes(
     page: int = Query(1, ge=1),
     per_page: int = Query(10, ge=1, le=100)
 ) -> QuoteListResponse:
+    quotes, total = quotes_service.list_quotes(
+        search=search, page=page, per_page=per_page
+    )
+    quote_previews = [
+        QuotePreviewResponse(
+            name=q.name,
+            company_name=q.company_name,
+            created_at=q.created_at,
+            is_paid=q.is_paid,
+            total_amount=q.total_amount,
+        )
+        for q in quotes
+    ]
+    return QuoteListResponse(
+        page=page, per_page=per_page, total=total, quote_previews=quote_previews
+    )
 
-    quotes, total = quote_repo.get_all_quotes(search, page, per_page)
-    return QuotePreviewListResponse(page=page, per_page=per_page, total=total, quote_previews=[QuotePreview.from_quote(quote) for quote in quotes])
-
-@router.get("/quote/{quote_id}", response_model=Quote)
+@router.get("/quote/{quote_id}", response_model=QuoteWithProductPreviewsWithQuantityResponse)
 async def get_quote_by_id(
     quote_id: int,
     token_data: dict = Depends(verify_token)
-) -> Quote:
+) -> QuoteWithProductPreviewsWithQuantityResponse:
     
     try:
-        return QuoteWithProductPreviewsWithQuantityResponse(quote_with_product_previews_with_quantity=quote_repo.get_quote_with_product_previews_with_quantity_by_id(quote_id))
+        domain = quotes_service.get_quote_with_products(quote_id=quote_id)
+        product_previews = [
+            ProductPreviewWithQuantityResponse(
+                id=p.id,
+                name=p.name,
+                part_number=p.part_number,
+                manufacturer=ManufacturerResponse(
+                    id=p.manufacturer.id,
+                    name=p.manufacturer.name,
+                ),
+                image_url=p.image_url,
+                quantity=p.quantity,
+            )
+            for p in domain.product_previews_with_quantity
+        ]
+
+        dto = QuoteWithProductPreviewsWithQuantityDataResponse(
+            name=domain.name,
+            company_name=domain.company_name,
+            country_code=domain.country_code,
+            phone=domain.phone,
+            email=domain.email,
+            message=domain.message,
+            created_at=domain.created_at,
+            id=domain.id,
+            is_paid=domain.is_paid,
+            total_amount=domain.total_amount,
+            product_previews_with_quantity=product_previews,
+        )
+
+        return QuoteWithProductPreviewsWithQuantityResponse(
+            quote_with_product_previews_with_quantity=dto
+        )
+        
     except KeyError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
 
@@ -483,9 +522,7 @@ async def add_quote(
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     is_admin(token_data)
-    quote_with_product_previews_with_quantity = QuoteWithProductPreviewsWithQuantity.from_request(request)
-    quote_repo.add_quote_with_product_previews_with_quantity(quote_with_product_previews_with_quantity)
-
+    quotes_service.create_quote(request=request)
     return ApiResponse(message="Quote added successfully.")
 
 @router.put("/quote/{quote_id}", response_model=ApiResponse)
@@ -495,8 +532,7 @@ async def update_quote(
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     is_admin(token_data)
-    quote_with_product_previews_with_quantity = QuoteWithProductPreviewsWithQuantity.from_request(request)
-    quote_repo.update_quote_with_product_previews_with_quantity(quote_id, quote_with_product_previews_with_quantity)
+    quotes_service.update_quote(quote_id=quote_id, request=request)
     return ApiResponse(message="Quote updated successfully.")
 
 @router.delete("/quote/{quote_id}", response_model=ApiResponse)
@@ -505,8 +541,7 @@ async def delete_quote(
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     is_admin(token_data)
-    quote_repo.delete_quote(quote_id)
-
+    quotes_service.delete_quote(quote_id=quote_id)
     return ApiResponse(message="Quote deleted successfully.")
 
 # This is a download
@@ -559,33 +594,29 @@ async def get_all_approvals(
     per_page: int = Query(10, ge=1, le=100)
 ) -> ApprovalResponse:
     user_role = get_user_role(token_data)
-    if user_role != UserRole.ADMIN:
-        # For non-admin users, only return their own requests
-        email = token_data.get("email")
-        return approval_repo.get_approvals(approval_id=approval_id, approval_type=approval_type, is_approved=is_approved, requester=email, page=page, per_page=per_page)
-    return approval_repo.get_approvals(
+    requester_email = token_data.get("email") if user_role != UserRole.ADMIN else None
+    return admin_approvals_service.list_approvals(
+        requester_email=requester_email,
         approval_id=approval_id,
         approval_type=approval_type,
         is_approved=is_approved,
         page=page,
-        per_page=per_page
+        per_page=per_page,
     )
 
 @router.post("/approvals", response_model=ApiResponse)
 async def add_approval(
-    approval: Approval,
+    approval: ApprovalRequest,
     attachment: Optional[UploadFile] = File(None),
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     email = token_data.get("email")
-    approval.requester = email
-    approval.request_date = datetime.datetime.now(timezone).strftime("%Y-%m-%d")
-    if attachment:
-        attachment_url = storage_service.save_upload_public(settings.aws_s3_blob_bucket, await attachment.read(), original_filename=attachment.filename)
-        approval.attachment_url = attachment_url
-    LogService.ADMIN.log(f"New approval request added by {email}: {approval.model_dump_json()}")
-    approval_repo.add_approval(approval)
-    return ApiResponse(message="Approval added successfully.")
+    return await admin_approvals_service.add_approval(
+        approval=approval,
+        attachment=attachment,
+        requester_email=email,
+        timezone=timezone,
+    )
 
 @router.delete("/approvals/{approval_id}", response_model=ApiResponse)
 async def delete_approval(
@@ -593,12 +624,9 @@ async def delete_approval(
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     email = token_data.get("email")
-    success = approval_repo.delete_approval(approval_id, deleter=email)
-    if success:
-        LogService.ADMIN.log(f"Approval request {approval_id} deleted by {email}")
-        return ApiResponse(message="Approval deleted successfully.")
-    else:
-        raise HTTPException(status_code=404, detail="Approval not found.")
+    return admin_approvals_service.delete_approval(
+        approval_id=approval_id, deleter_email=email
+    )
 
 @router.put("/approvals/{approval_id}/approve", response_model=ApiResponse)
 async def approve_approval(
@@ -607,12 +635,9 @@ async def approve_approval(
 ) -> ApiResponse:
     is_admin(token_data)
     email = token_data.get("email")
-    approval = approval_repo.approve_request(approval_id)
-    if approval:
-        LogService.ADMIN.log(f"Approval request {approval_id} approved by {email}")
-        return ApiResponse(message="Approval approved successfully.")
-    else:
-        raise HTTPException(status_code=404, detail="Approval not found.")
+    return admin_approvals_service.approve_approval(
+        approval_id=approval_id, approver_email=email
+    )
 
 @router.put("/approvals/{approval_id}/reject", response_model=ApiResponse)
 async def reject_approval(
@@ -621,11 +646,8 @@ async def reject_approval(
 ) -> ApiResponse:
     is_admin(token_data)
     email = token_data.get("email")
-    approval = approval_repo.reject_request(approval_id)
-    if approval:
-        LogService.ADMIN.log(f"Approval request {approval_id} rejected by {email}")
-        return ApiResponse(message="Approval rejected successfully.")
-    else:
-        raise HTTPException(status_code=404, detail="Approval not found.")
+    return admin_approvals_service.reject_approval(
+        approval_id=approval_id, rejector_email=email
+    )
     
 

@@ -4,7 +4,8 @@ from typing import List, Optional
 
 from fastapi import HTTPException
 
-from app.schemas import Approval, ApprovalResponse
+from app.models.db.data_models import Approval
+from app.utils.supabase_client_util import get_supabase_client
 
 
 class ApprovalRepository:
@@ -16,9 +17,18 @@ class ApprovalRepository:
     def __init__(self) -> None:
         self._approvals = []
         self._id_counter = 1
+        self._client = get_supabase_client()
 
     def add_approval(self, approval: Approval) -> Approval:
         """Create a new approval request."""
+        if self._client is not None:
+            row = approval.model_dump(exclude={"id"})
+            insert_resp = self._client.table("tbl_approvals").insert(row).execute()
+            inserted = (insert_resp.data or [])[:1]
+            if inserted and inserted[0].get("id") is not None:
+                approval.id = inserted[0]["id"]
+            return approval
+
         if approval.id is None:
             approval.id = self._id_counter
             self._id_counter += 1
@@ -27,6 +37,17 @@ class ApprovalRepository:
 
     def get_approval_by_id(self, approval_id: int) -> Optional[Approval]:
         """Retrieve an approval by ID."""
+        if self._client is not None:
+            resp = (
+                self._client.table("tbl_approvals")
+                .select("*")
+                .eq("id", approval_id)
+                .limit(1)
+                .execute()
+            )
+            rows = resp.data or []
+            return Approval.model_validate(rows[0]) if rows else None
+
         for approval in self._approvals:
             if approval.id == approval_id:
                 return approval
@@ -64,12 +85,48 @@ class ApprovalRepository:
         is_approved: Optional[bool] = None,
         page: int = 1,
         per_page: int = 10
-    ) -> ApprovalResponse:
+    ) -> tuple[List[Approval], int]:
         """
         Unified filter method for approvals.
         All parameters are optional and ignored if None.
         Returns all approvals matching the provided filters.
         """
+        if self._client is not None:
+            base = (
+                self._client.table("tbl_approvals")
+                .select("*")
+            )
+            if approval_id is not None:
+                base = base.eq("id", approval_id)
+            if requester is not None:
+                base = base.eq("requester", requester)
+            if approval_type is not None:
+                base = base.eq("type", approval_type)
+            if is_approved is not None:
+                base = base.eq("is_approved", is_approved)
+
+            total_resp = base.execute()
+            total = len(total_resp.data or [])
+
+            start = (page - 1) * per_page
+            end = start + per_page - 1
+            slice_resp = (
+                self._client.table("tbl_approvals")
+                .select("*")
+            )
+            if approval_id is not None:
+                slice_resp = slice_resp.eq("id", approval_id)
+            if requester is not None:
+                slice_resp = slice_resp.eq("requester", requester)
+            if approval_type is not None:
+                slice_resp = slice_resp.eq("type", approval_type)
+            if is_approved is not None:
+                slice_resp = slice_resp.eq("is_approved", is_approved)
+            slice_resp = slice_resp.order("id", desc=False).range(start, end).execute()
+
+            approvals = [Approval.model_validate(r) for r in (slice_resp.data or [])]
+            return approvals, total
+
         results = self._approvals.copy()
         
         if approval_id is not None:
@@ -86,15 +143,19 @@ class ApprovalRepository:
         
         start = (page - 1) * per_page
         end = start + per_page
-        return ApprovalResponse(
-            page=page,
-            per_page=per_page,
-            total=len(results),
-            approvals=results[start:end]
-        )   
+        return results[start:end], len(results)
     
     def delete_approval(self, approval_id: int, deleter: str) -> bool:
         """Delete an approval request by ID."""
+        if self._client is not None:
+            approval = self.get_approval_by_id(approval_id)
+            if approval is None:
+                return False
+            if approval.requester != deleter:
+                raise HTTPException(status_code=403, detail="Only the requester can delete this approval")
+            self._client.table("tbl_approvals").delete().eq("id", approval_id).execute()
+            return True
+
         for i, approval in enumerate(self._approvals):
             if approval.id == approval_id:
                 if approval.requester != deleter:
@@ -105,6 +166,19 @@ class ApprovalRepository:
 
     def approve_request(self, approval_id: int) -> Optional[Approval]:
         """Mark an approval request as approved."""
+        if self._client is not None:
+            updated = (
+                self._client.table("tbl_approvals")
+                .update({"is_approved": True})
+                .eq("id", approval_id)
+                .execute()
+            )
+            rows = updated.data or []
+            if rows:
+                return Approval.model_validate(rows[0])
+            # If supabase returns no rows, fall back to fetch.
+            return self.get_approval_by_id(approval_id)
+
         approval = self.get_approval_by_id(approval_id)
         if approval:
             approval.is_approved = True
@@ -113,6 +187,18 @@ class ApprovalRepository:
 
     def reject_request(self, approval_id: int) -> Optional[Approval]:
         """Reject/delete an approval request."""
+        if self._client is not None:
+            updated = (
+                self._client.table("tbl_approvals")
+                .update({"is_approved": False})
+                .eq("id", approval_id)
+                .execute()
+            )
+            rows = updated.data or []
+            if rows:
+                return Approval.model_validate(rows[0])
+            return self.get_approval_by_id(approval_id)
+
         approval = self.get_approval_by_id(approval_id)
         if approval:
             approval.is_approved = False
