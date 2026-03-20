@@ -9,7 +9,7 @@ from app.utils.supabase_client_util import get_supabase_client
 
 class ProductRepository:
     """
-    Placeholder repository. Replace with SQL queries against tbl_product/tbl_offer_product.
+    Placeholder repository. Replace with SQL queries against products/product_countries.
     """
 
     def __init__(self) -> None:
@@ -19,7 +19,7 @@ class ProductRepository:
                 name="SIMATIC S7-1500 CPU",
                 part_number="CPU-1510",
                 manufacturer=Manufacturer(id=1, name="Siemens"),
-                stock=True,
+                image_url=None,
                 description="Sample PLC CPU for wiring cabinets.",
             )
         ]
@@ -33,7 +33,7 @@ class ProductRepository:
             return None
 
         response = (
-            self._client.table("tbl_product")
+            self._client.table("products")
             .select("id,name,part_number,manufacturer_id,image_url,description")
             .eq("id", product_id)
             .limit(1)
@@ -46,7 +46,7 @@ class ProductRepository:
 
         manuf_id = row.get("manufacturer_id")
         manuf_resp = (
-            self._client.table("tbl_manufacturer")
+            self._client.table("manufacturers")
             .select("id,name")
             .eq("id", manuf_id)
             .limit(1)
@@ -79,7 +79,7 @@ class ProductRepository:
 
         row = product.model_dump(exclude={"id", "manufacturer"})
         row["manufacturer_id"] = product.manufacturer.id
-        insert_resp = self._client.table("tbl_product").insert(row).execute()
+        insert_resp = self._client.table("products").insert(row).execute()
         inserted = (insert_resp.data or [])[:1]
         if inserted and inserted[0].get("id") is not None:
             product.id = inserted[0]["id"]
@@ -99,14 +99,14 @@ class ProductRepository:
 
         row = product.model_dump(exclude={"id", "manufacturer"})
         row["manufacturer_id"] = product.manufacturer.id
-        self._client.table("tbl_product").update(row).eq("id", product.id).execute()
+        self._client.table("products").update(row).eq("id", product.id).execute()
             
     def delete_product(self, product_id: int) -> None:
         if self._client is None:
             self._products = [item for item in self._products if item.id != product_id]
             return
 
-        self._client.table("tbl_product").delete().eq("id", product_id).execute()
+        self._client.table("products").delete().eq("id", product_id).execute()
 
     def list_products(
         self,
@@ -125,7 +125,7 @@ class ProductRepository:
             return filtered, total
 
         query = (
-            self._client.table("tbl_product")
+            self._client.table("products")
             .select("id,name,part_number,manufacturer_id,image_url,description")
         )
         if search:
@@ -143,7 +143,7 @@ class ProductRepository:
         manuf_map = {}
         if manufacturer_ids:
             m_resp = (
-                self._client.table("tbl_manufacturer")
+                self._client.table("manufacturers")
                 .select("id,name")
                 .in_("id", manufacturer_ids)
                 .execute()

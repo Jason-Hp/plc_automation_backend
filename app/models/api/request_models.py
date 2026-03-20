@@ -115,7 +115,6 @@ class ContactInfoRequest(BaseModel):
 class BlogUploadRequest(BaseModel):
     id: Optional[int] = None
     title: str
-    # Stored separately via BlogCategory join table.
     image_url: str
     published_by: str
 
@@ -124,6 +123,10 @@ class BlogUploadRequest(BaseModel):
     updated_at: str
 
     content: str
+
+
+class BlogWithCategoriesRequest(BlogUploadRequest):
+    categories: list[CategoryRequest]
 
 
 class JobUploadRequest(BaseModel):
@@ -149,5 +152,4 @@ class ApprovalRequest(BaseModel):
     requester: Optional[str] = None
     request_date: Optional[str] = None  # DD - MM - YYYY
     attachment_url: Optional[str] = None
-
 

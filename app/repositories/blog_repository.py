@@ -44,9 +44,9 @@ class BlogRepository:
             return filtered[start:end], total
 
         # Supabase-backed implementation.
-        blog_table = "tbl_blog"
-        join_table = "tbl_blog_category"
-        category_table = "tbl_category"
+        blog_table = "blogs"
+        join_table = "blogs_categories"
+        category_table = "categories"
 
         blog_ids_filter = None
         if categories:
@@ -148,7 +148,7 @@ class BlogRepository:
             return None
 
         response = (
-            self._client.table("tbl_blog")
+            self._client.table("blogs")
             .select("id,title,image_url,published_by,created_at,updated_at,content")
             .eq("id", blog_id)
             .limit(1)
@@ -161,7 +161,7 @@ class BlogRepository:
         row = rows[0]
 
         join_resp = (
-            self._client.table("tbl_blog_category")
+            self._client.table("blogs_categories")
             .select("category_id")
             .eq("blog_id", blog_id)
             .execute()
@@ -171,7 +171,7 @@ class BlogRepository:
         cats = []
         if category_ids:
             cat_resp = (
-                self._client.table("tbl_category")
+                self._client.table("categories")
                 .select("id,name")
                 .in_("id", category_ids)
                 .execute()
@@ -192,7 +192,7 @@ class BlogRepository:
             return blog
 
         row = blog.model_dump(exclude={"categories"})
-        insert_resp = self._client.table("tbl_blog").insert(row).execute()
+        insert_resp = self._client.table("blogs").insert(row).execute()
         # Supabase may return inserted rows; best-effort assignment.
         inserted = (insert_resp.data or [])[:1]
         if inserted and inserted[0].get("id") is not None:
@@ -208,11 +208,11 @@ class BlogRepository:
             return
 
         row = blog.model_dump(exclude={"id", "categories"})
-        self._client.table("tbl_blog").update(row).eq("id", blog_id).execute()
+        self._client.table("blogs").update(row).eq("id", blog_id).execute()
 
     def delete_blog(self, blog_id: int) -> None:
         if self._client is None:
             self._blogs = [blog for blog in self._blogs if blog.id != blog_id]
             return
 
-        self._client.table("tbl_blog").delete().eq("id", blog_id).execute()
+        self._client.table("blogs").delete().eq("id", blog_id).execute()

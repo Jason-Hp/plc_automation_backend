@@ -21,7 +21,7 @@ class JobRepository:
             return self._jobs
 
         response = (
-            self._client.table("tbl_job")
+            self._client.table("jobs")
             .select("*")
             .order("id", desc=False)
             .execute()
@@ -36,7 +36,7 @@ class JobRepository:
             return None
 
         response = (
-            self._client.table("tbl_job")
+            self._client.table("jobs")
             .select("*")
             .eq("id", job_id)
             .limit(1)
@@ -57,7 +57,7 @@ class JobRepository:
             return job
 
         row = job.model_dump(exclude={"id"})
-        insert_resp = self._client.table("tbl_job").insert(row).execute()
+        insert_resp = self._client.table("jobs").insert(row).execute()
         inserted = (insert_resp.data or [])[:1]
         if inserted and inserted[0].get("id") is not None:
             job.id = inserted[0]["id"]
@@ -71,11 +71,11 @@ class JobRepository:
                     return
             return
 
-        self._client.table("tbl_job").update(job.model_dump(exclude={"id"})).eq("id", job_id).execute()
+        self._client.table("jobs").update(job.model_dump(exclude={"id"})).eq("id", job_id).execute()
 
     def delete_job(self, job_id: int) -> None:
         if self._client is None:
             self._jobs = [job for job in self._jobs if job.id != job_id]
             return
 
-        self._client.table("tbl_job").delete().eq("id", job_id).execute()
+        self._client.table("jobs").delete().eq("id", job_id).execute()

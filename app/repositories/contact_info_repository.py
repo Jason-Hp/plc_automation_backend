@@ -13,7 +13,7 @@ class ContactInfoRepository:
             return self._contact_infos
 
         response = (
-            self._client.table("tbl_contact_info")
+            self._client.table("contact_infos")
             .select("id,address,phone,email,working_hours,country")
             .order("id", desc=False)
             .execute()
@@ -28,7 +28,7 @@ class ContactInfoRepository:
             return None
 
         response = (
-            self._client.table("tbl_contact_info")
+            self._client.table("contact_infos")
             .select("id,address,phone,email,working_hours,country")
             .ilike("country", country)
             .limit(1)
@@ -47,7 +47,7 @@ class ContactInfoRepository:
                     return
             return
 
-        self._client.table("tbl_contact_info").update(info.model_dump(exclude={"id"})).eq("id", contact_id).execute()
+        self._client.table("contact_infos").update(info.model_dump(exclude={"id"})).eq("id", contact_id).execute()
 
     def add_contact_info(self, info: ContactInfo) -> None:
         if self._client is None:
@@ -58,11 +58,11 @@ class ContactInfoRepository:
             return
 
         row = info.model_dump(exclude={"id"})
-        self._client.table("tbl_contact_info").insert(row).execute()
+        self._client.table("contact_infos").insert(row).execute()
 
     def delete_contact_info(self, contact_id: int) -> None:
         if self._client is None:
             self._contact_infos = [info for info in self._contact_infos if info.id != contact_id]
             return
 
-        self._client.table("tbl_contact_info").delete().eq("id", contact_id).execute()
+        self._client.table("contact_infos").delete().eq("id", contact_id).execute()

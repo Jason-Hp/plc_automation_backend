@@ -46,7 +46,7 @@ class QuoteRepository:
             return all_quotes[start:end], total
 
         query = (
-            self._client.table("tbl_quotes")
+            self._client.table("quotes")
             .select("*")
         )
         if search:
@@ -67,7 +67,7 @@ class QuoteRepository:
             return self._quote_table[quote_id]
 
         resp = (
-            self._client.table("tbl_quotes")
+            self._client.table("quotes")
             .select("*")
             .eq("id", quote_id)
             .limit(1)
@@ -90,7 +90,7 @@ class QuoteRepository:
             return quote_id
 
         row = quote.model_dump(exclude={"id"})
-        insert_resp = self._client.table("tbl_quotes").insert(row).execute()
+        insert_resp = self._client.table("quotes").insert(row).execute()
         inserted = (insert_resp.data or [])[:1]
         if inserted and inserted[0].get("id") is not None:
             return inserted[0]["id"]
@@ -109,7 +109,7 @@ class QuoteRepository:
 
         if quote.id is None:
             return
-        self._client.table("tbl_quotes").update(
+        self._client.table("quotes").update(
             quote.model_dump(exclude={"id"})
         ).eq("id", quote.id).execute()
 
@@ -118,4 +118,4 @@ class QuoteRepository:
             self._quote_table.pop(quote_id, None)
             return
 
-        self._client.table("tbl_quotes").delete().eq("id", quote_id).execute()
+        self._client.table("quotes").delete().eq("id", quote_id).execute()
