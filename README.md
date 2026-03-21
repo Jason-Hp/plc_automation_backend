@@ -8,7 +8,7 @@ Base URL: `http://localhost:8000/api`
 - **Repository Layer**: Data access (`app/repositories/`)
 - **Supabase**: Primary database and authentication provider.
 
-## Global Headers
+## Global Headers (MUST INCLUDE IN EVERY CALL)
 - `lang`: (optional) Language for translation (default: `en`).
 - `country`: (optional) Country code for context (default: `SG`).
 - `Authorization`: `Bearer <token>` (Required for all `/admin/*` endpoints).
