@@ -210,7 +210,6 @@ class JobPreviewListResponse(BaseModel):
     per_page: int
     total: int
     job_previews: List[JobPreviewResponse] = []
-    posted_date: str  # DD - MM - YYYY
 
 
 class ProductWithStockResponse(BaseModel):

@@ -1,539 +1,224 @@
-# PLC Automation Backend API Endpoints
+# PLC Automation Backend API
 
-Base URL: `http://localhost:8000`
+Base URL: `http://localhost:8000/api`
 
-All endpoints below are under `/api`.
+## Architecture
+- **Controller Layer**: API routes (`app/routes/`)
+- **Service Layer**: Business logic (`app/services/`)
+- **Repository Layer**: Data access (`app/repositories/`)
+- **Supabase**: Primary database and authentication provider.
 
-## Header rules (applies to every endpoint)
-
-- `lang`: optional, default `en`
-- `country`: optional, default `SG`
-- `Authorization`: required for all `/api/admin/*` endpoints 
-
----
-
-## Architecture (Layering)
-
-This backend follows a clear separation of concerns:
-- API routes act as the controller layer (they accept/return API request/response DTOs).
-- Business logic lives in services.
-- Data access lives in repositories (Supabase-backed).
-
-## Supabase / Environment Setup
-
-This backend is Supabase-ready. Supabase-backed repositories (products, quotes, blogs, etc.) use:
-- `SUPABASE_URL`
-- `SUPABASE_KEY`
-
-These variables are REQUIRED for the app to function. If either is missing, the app will raise a `RuntimeError` on startup.
-
-Semantic search uses:
-- `OPENAI_API_KEY`
-
-Environment variables are loaded from `.env` via `app/config.py`.
+## Global Headers
+- `lang`: (optional) Language for translation (default: `en`).
+- `country`: (optional) Country code for context (default: `SG`).
+- `Authorization`: `Bearer <token>` (Required for all `/admin/*` endpoints).
 
 ---
 
-## Health Route
+## Public Info Endpoints
 
-### GET `/api/health`
-**Headers**
+### GET `/faqs`
+**Response 200**
 ```json
-{
-  "lang": "en (optional)",
-  "country": "SG (optional)"
-}
+[
+  {
+    "id": 1,
+    "question": "What is a PLC?",
+    "answer": "Programmable Logic Controller..."
+  }
+]
 ```
 
+### GET `/contact-info`
+**Response 200**
+```json
+[
+  {
+    "id": 1,
+    "address": "123 Main St",
+    "phone": "+65 1234 5678",
+    "email": "contact@example.com",
+    "working_hours": "9am-6pm",
+    "country": "Singapore"
+  }
+]
+```
+
+### GET `/contact-info/{country}`
+**Response 200**
+Same as `/contact-info` but returns a single object.
+
+### GET `/categories`
+**Response 200**
+```json
+[
+  { "id": 1, "name": "CPU" }
+]
+```
+
+### GET `/manufacturers`
+**Response 200**
+```json
+[
+  { "id": 1, "name": "Siemens" }
+]
+```
+
+### GET `/countries`
+**Response 200**
+```json
+[
+  { "id": 1, "name": "Singapore", "code": "SG" }
+]
+```
+
+---
+
+## Public Form Endpoints
+
+### POST `/enquiry`
 **Request body**
 ```json
-{}
-```
-
-**Response 200**
-```json
 {
-  "status": "ok"
+  "name": "John Doe",
+  "company_name": "Tech Corp",
+  "country_code": "SG",
+  "phone": "12345678",
+  "email": "john@example.com",
+  "message": "I need more information."
 }
 ```
 
----
+### POST `/quote`
+**Content-Type**: `multipart/form-data`
+**Request body**
+- `payload`: JSON string matching `QuoteWithProductPreviewsWithQuantityRequest`
+- `attachment`: (optional file)
 
-## Forms Routes
-
-### POST `/api/enquiry`
-**Headers**
-```json
-{
-  "lang": "en (optional)",
-  "country": "SG (optional)"
-}
-```
-
-**Request body (application/json)**
+`payload` schema:
 ```json
 {
   "name": "John Doe",
-  "company_name": "ACME Industrial",
-  "country_code": "65",
-  "phone": "98765432",
-  "email": "john@acme.com",
-  "message": "Need help with PLC panel upgrades"
-}
-```
-
-**Response 200**
-```json
-{
-  "message": "Your query has been submitted successfully."
-}
-```
-
-### POST `/api/quote`
-**Headers**
-```json
-{
-  "lang": "en (optional)",
-  "country": "SG (optional)",
-  "Content-Type": "multipart/form-data"
-}
-```
-
-**Request body (multipart/form-data)**
-- `payload`: The JSON data for the quote (follows the schema below)
-- `attachment`: (file, optional)
-
-`payload` JSON schema:
-```json
-{
-  "name": "John Doe",
-  "company_name": "ACME Industrial",
-  "country_code": "65",
-  "phone": "98765432",
-  "email": "john@acme.com",
-  "message": "Need quote",
+  "company_name": "Tech Corp",
+  "country_code": "SG",
+  "phone": "12345678",
+  "email": "john@example.com",
+  "message": "Request for quote",
   "product_previews_with_quantity": [
     {
       "id": 1,
-      "name": "SIMATIC S7-1500 CPU",
-      "part_number": "CPU-1510",
-      "manufacturer": {
-        "id": 1,
-        "name": "Siemens"
-      },
-      "image_url": "https://cdn.example.com/products/cpu-1510.jpg",
-      "quantity": 1
+      "name": "S7-1200",
+      "part_number": "6ES7214-1AG40-0XB0",
+      "manufacturer": { "id": 1, "name": "Siemens" },
+      "quantity": 5
     }
   ]
 }
 ```
 
-**Response 200**
-```json
-{
-  "message": "Your enquiry has been submitted successfully."
-}
-```
-
-### POST `/api/newsletter`
-**Headers**
-```json
-{
-  "lang": "en (optional)",
-  "country": "SG (optional)"
-}
-```
-
-**Request body (application/json)**
+### POST `/newsletter`
+**Request body**
 ```json
 {
   "email": "subscriber@example.com"
 }
 ```
 
-**Response 200**
-```json
-{
-  "message": "Thank you for subscribing."
-}
-```
 ---
 
-## Product Routes
+## Products & Search
 
-### GET `/api/products?page=1&per_page=30&category=<optional>&search=<optional>`
-**Headers**
-```json
-{
-  "lang": "en (optional)",
-  "country": "SG (optional)"
-}
-```
-
-**Request body**
-```json
-{}
-```
-
+### GET `/products?page={page}&per_page={per_page}&search={search}`
 **Response 200**
 ```json
 {
-  "product_previews": [
-    {
-      "id": 1,
-      "name": "SIMATIC S7-1500 CPU",
-      "part_number": "CPU-1510",
-      "manufacturer": {
-        "id": 1,
-        "name": "Siemens"
-      },
-      "image_url": "https://cdn.example.com/products/cpu-1510.jpg"
-    }
-  ],
+  "product_previews": [...],
   "page": 1,
   "per_page": 30,
-  "total": 1
+  "total": 100
 }
 ```
 
-### GET `/api/products/{product_id}`
-**Headers**
-```json
-{
-  "lang": "en (optional)",
-  "country": "SG (optional)"
-}
-```
-
-**Request body**
-```json
-{}
-```
-
+### GET `/products/{product_id}`
 **Response 200**
 ```json
 {
-  "id": 1,
-  "name": "SIMATIC S7-1500 CPU",
-  "part_number": "CPU-1510",
-  "manufacturer": {
-    "id": 1,
-    "name": "Siemens"
-  },
-  "image_url": "https://cdn.example.com/products/cpu-1510.jpg",
-  "stock": true,
-  "description": "Sample PLC CPU for wiring cabinets."
+  "product_with_stock": {
+    "product": {
+      "id": 1,
+      "name": "S7-1200",
+      "part_number": "6ES7214-1AG40-0XB0",
+      "manufacturer": { "id": 1, "name": "Siemens" },
+      "description": "Powerful PLC"
+    },
+    "stock": true
+  }
 }
 ```
 
-**Response 404**
+### GET `/semantic-search?query={query}&top_k={top_k}`
+**Response 200**
 ```json
 {
-  "detail": "Product not found"
+  "product_previews": [...],
+  "page": 1,
+  "per_page": 10,
+  "total": 10
 }
 ```
 
 ---
 
-## Info Routes
+## Blogs
 
-### GET `/api/faqs`
-**Headers**
-```json
-{
-  "lang": "en (optional)",
-  "country": "SG (optional)"
-}
-```
-
-**Request body**
-```json
-{}
-```
-
-**Response 200**
-```json
-[
-  {
-    "id": 1,
-    "question": "What is PLC automation?",
-    "answer": "..."
-  }
-]
-```
-
-### GET `/api/contact-info`
-**Headers**
-```json
-{
-  "lang": "en (optional)",
-  "country": "SG (optional)"
-}
-```
-
-**Request body**
-```json
-{}
-```
-
-**Response 200**
-```json
-[
-  {
-    "id": 1,
-    "address": "1 Example Street",
-    "phone": "+65 6000 0000",
-    "email": "info@example.com",
-    "working_hours": "Mon-Fri 9AM-6PM",
-    "country": "SG"
-  }
-]
-```
-
-### GET `/api/contact-info/{country}`
-**Headers**
-```json
-{
-  "lang": "en (optional)",
-  "country": "SG (optional)"
-}
-```
-
-**Request body**
-```json
-{}
-```
-
-**Response 200**
-```json
-{
-  "id": 1,
-  "address": "1 Example Street",
-  "phone": "+65 6000 0000",
-  "email": "info@example.com",
-  "working_hours": "Mon-Fri 9AM-6PM",
-  "country": "SG"
-}
-```
-
-**Response 404**
-```json
-{
-  "detail": "Contact info not found"
-}
-```
-
-### GET `/api/categories`
-**Headers**
-```json
-{
-  "lang": "en (optional)",
-  "country": "SG (optional)"
-}
-```
-
-**Request body**
-```json
-{}
-```
-
-**Response 200**
-```json
-[
-  {
-    "id": 1,
-    "name": "PLC Systems"
-  }
-]
-```
-
-### GET `/api/manufacturers`
-**Headers**
-```json
-{
-  "lang": "en (optional)",
-  "country": "SG (optional)"
-}
-```
-
-**Request body**
-```json
-{}
-```
-
-**Response 200**
-```json
-[
-  {
-    "id": 1,
-    "name": "Siemens"
-  }
-]
-```
-
-### GET `/api/countries`
-**Headers**
-```json
-{
-  "lang": "en (optional)",
-  "country": "SG (optional)"
-}
-```
-
-**Request body**
-```json
-{}
-```
-
-**Response 200**
-```json
-[
-  {
-    "id": 1,
-    "name": "Singapore",
-    "code": "SG"
-  }
-]
-```
-
----
-
-## Blog Routes
-
-### POST `/api/blogs/?page=1&per_page=10`
-**Headers**
-```json
-{
-  "lang": "en (optional)",
-  "country": "SG (optional)"
-}
-```
-
+### POST `/blogs/?page={page}&per_page={per_page}`
 **Request body**
 ```json
 {
   "search": "PLC",
-  "categories": ["Guide"]
+  "categories": ["Guide", "News"]
 }
 ```
-
 **Response 200**
 ```json
 {
   "page": 1,
   "per_page": 10,
-  "total": 1,
+  "total": 5,
   "blog_previews": [
     {
       "id": 1,
-      "title": "How to select a PLC",
-      "categories": [
-        {
-          "id": 1,
-          "name": "Guide"
-        }
-      ],
-      "image_url": "https://cdn.example.com/blogs/plc-guide.jpg",
-      "published_by": "PLC Automation",
+      "title": "Getting started with PLCs",
+      "categories": [{ "id": 1, "name": "Guide" }],
+      "image_url": "...",
+      "published_by": "Admin",
       "created_at": "01-01-2025",
-      "updated_at": "02-01-2025"
+      "updated_at": "01-01-2025"
     }
   ]
 }
 ```
 
-### GET `/api/blogs/{blogId}`
-**Headers**
-```json
-{
-  "lang": "en (optional)",
-  "country": "SG (optional)"
-}
-```
-
-**Request body**
-```json
-{}
-```
-
+### GET `/blogs/{blogId}`
 **Response 200**
 ```json
 {
   "id": 1,
-  "title": "How to select a PLC",
-  "categories": [
-    {
-      "id": 1,
-      "name": "Guide"
-    }
-  ],
-  "image_url": "https://cdn.example.com/blogs/plc-guide.jpg",
-  "published_by": "PLC Automation",
-  "created_at": "01-01-2025",
-  "updated_at": "02-01-2025",
-  "content": "..."
-}
-```
-
-**Response 404**
-```json
-{
-  "detail": "Blog not found"
+  "title": "...",
+  "categories": [...],
+  "image_url": "...",
+  "published_by": "...",
+  "created_at": "...",
+  "updated_at": "...",
+  "content": "Full blog content here..."
 }
 ```
 
 ---
 
-## Search Routes
+## Jobs
 
-### GET `/api/semantic-search?query=<required>&top_k=10`
-**Headers**
-```json
-{
-  "lang": "en (optional)",
-  "country": "SG (optional)"
-}
-```
-
-**Request body**
-```json
-{}
-```
-
-**Response 200**
-```json
-[
-  {
-    "id": 1,
-    "name": "SIMATIC S7-1500 CPU",
-    "part_number": "CPU-1510",
-    "manufacturer": {
-      "id": 1,
-      "name": "Siemens"
-    },
-    "image_url": "https://cdn.example.com/products/cpu-1510.jpg"
-  }
-]
-```
-
----
-
-## Job Routes
-
-### GET `/api/jobs/`
-**Headers**
-```json
-{
-  "lang": "en (optional)",
-  "country": "SG (optional)"
-}
-```
-
-**Request body**
-```json
-{}
-```
-
+### GET `/jobs/?page={page}&per_page={per_page}`
 **Response 200**
 ```json
 {
@@ -553,20 +238,7 @@ Environment variables are loaded from `.env` via `app/config.py`.
 }
 ```
 
-### GET `/api/jobs/{job_id}`
-**Headers**
-```json
-{
-  "lang": "en (optional)",
-  "country": "SG (optional)"
-}
-```
-
-**Request body**
-```json
-{}
-```
-
+### GET `/jobs/{job_id}`
 **Response 200**
 ```json
 {
@@ -580,813 +252,85 @@ Environment variables are loaded from `.env` via `app/config.py`.
   "requirements": "...",
   "responsibilities": "...",
   "description": "...",
-  "working_hours": "Mon-Fri 9AM-6PM"
+  "working_hours": "9am-6pm"
 }
 ```
 
-### POST `/api/jobs/{job_id}/application`
-**Headers**
+### POST `/jobs/{job_id}/application`
+**Content-Type**: `multipart/form-data`
+**Request body**
+- `payload`: JSON string matching `JobApplicationRequest`
+- `resume`: (required file)
+
+`payload` schema:
 ```json
 {
-  "lang": "en (optional)",
-  "country": "SG (optional)",
-  "Content-Type": "multipart/form-data"
-}
-```
-
-**Request body (multipart/form-data)**
-- `payload`: The JSON data for the application (follows the schema below)
-- `resume`: (file, required)
-
-`payload` JSON schema:
-```json
-{
-  "first_name": "Jane",
+  "first_name": "John",
   "last_name": "Doe",
-  "email": "jane@example.com",
-  "country_code": "65",
-  "phone": "91234567",
+  "email": "john@doe.com",
+  "country_code": "SG",
+  "phone": "12345678",
   "experience": "5 years"
-}
-```
-
-**Response 200**
-```json
-{
-  "message": "Application submitted successfully."
 }
 ```
 
 ---
 
-## Admin Routes
+## Admin Endpoints (Requires Auth)
 
-> All admin endpoints below require:
->
-> `Authorization: Bearer <token>`
-
-### GET `/api/admin/user-info`
-**Headers**
-```json
-{
-  "lang": "en (optional)",
-  "country": "SG (optional)",
-  "Authorization": "Bearer <token>"
-}
-```
-
+### GET `/admin/user-info`
 **Response 200**
 ```json
 {
-  "uuid": "user-uuid",
-  "email": "user@example.com",
+  "uuid": "...",
+  "email": "admin@example.com",
   "user_role": "admin"
 }
 ```
 
-### POST `/api/admin/account`
-**Headers**
+### POST `/admin/account`
+**Request body**
 ```json
 {
-  "lang": "en (optional)",
-  "country": "SG (optional)",
-  "Authorization": "Bearer <token>"
-}
-```
-
-**Request body (application/json)**
-```json
-{
-  "email": "newuser@example.com",
-  "password": "strong-password",
+  "email": "user@example.com",
+  "password": "password123",
   "user_role": "user"
 }
 ```
 
-**Response 200**
+### POST `/admin/broadcast-newsletter`
+**Content-Type**: `multipart/form-data`
+**Request body**
+- `payload`: JSON matching `NewsLetterContentRequest`
+- `attachments`: (optional files)
+
+`payload` schema:
 ```json
 {
-  "message": "Account created successfully."
+  "subject": "Weekly Updates",
+  "content": "HTML or text content"
 }
 ```
 
-### POST `/api/admin/products/batch` (THIS ENDPOINT IS NOT WOKRING, DO NOT USE)
-**Headers**
-```json
-{
-  "lang": "en (optional)",
-  "country": "SG (optional)",
-  "Authorization": "Bearer <token>",
-  "Content-Type": "multipart/form-data"
-}
-```
-
-**Request body (multipart/form-data)**
-- `csv_file` (file, required, `.csv`)
-
-**Response 200**
-```json
-{
-  "processed": 12,
-  "message": "CSV processed (placeholder)."
-}
-```
-
-### POST `/api/admin/products`
-**Headers**
-```json
-{
-  "lang": "en (optional)",
-  "country": "SG (optional)",
-  "Authorization": "Bearer <token>"
-}
-```
-
-**Query params**
-- `country_ids` (required, repeatable integer values)
-
-**Request body (application/json)**
-```json
-{
-  "id": 2,
-  "name": "Relay Module",
-  "part_number": "RM-100",
-  "manufacturer": "Siemen",
-  "image_url": "https://cdn.example.com/products/relay-module.jpg",
-  "stock": true,
-  "description": "Industrial relay"
-}
-```
-
-**Response 200**
-```json
-{
-  "message": "Product uploaded successfully."
-}
-```
-
-### PUT `/api/admin/products/{product_id}`
-**Headers**
-```json
-{
-  "lang": "en (optional)",
-  "country": "SG (optional)",
-  "Authorization": "Bearer <token>"
-}
-```
-
-**Query params**
-- `country_ids` (required, repeatable integer values)
-
-**Request body (application/json)**
-```json
-{
-  "id": 2,
-  "name": "Relay Module",
-  "part_number": "RM-100",
-  "manufacturer": "Siemen",
-  "image_url": "https://cdn.example.com/products/relay-module.jpg",
-  "stock": true,
-  "description": "Industrial relay"
-}
-```
-
-**Response 200**
-```json
-{
-  "message": "Product updated successfully."
-}
-```
-
-### DELETE `/api/admin/products/{product_id}`
-**Headers**
-```json
-{
-  "lang": "en (optional)",
-  "country": "SG (optional)",
-  "Authorization": "Bearer <token>"
-}
-```
-
+### POST `/admin/products`
 **Request body**
 ```json
-{}
-```
-
-**Response 200**
-```json
 {
-  "message": "Product deleted successfully."
-}
-```
-
-### POST `/api/admin/broadcast-newsletter`
-**Headers**
-```json
-{
-  "lang": "en (optional)",
-  "country": "SG (optional)",
-  "Authorization": "Bearer <token>",
-  "Content-Type": "multipart/form-data"
-}
-```
-
-**Request body (multipart/form-data)**
-- `payload`: The JSON data for the newsletter (follows the schema below)
-- `attachments`: (list of files, optional)
-
-`payload` JSON schema:
-```json
-{
-  "subject": "Monthly updates",
-  "content": "New products available"
-}
-```
-
-**Response 200**
-```json
-{
-  "message": "Newsletter broadcasted."
-}
-```
-
-### POST `/api/admin/faqs`
-**Headers**
-```json
-{
-  "lang": "en (optional)",
-  "country": "SG (optional)",
-  "Authorization": "Bearer <token>"
-}
-```
-
-**Request body (application/json)**
-```json
-[
-  {
-    "question": "What is PLC?",
-    "answer": "Programmable Logic Controller"
-  }
-]
-```
-
-**Response 200**
-```json
-{
-  "message": "FAQs uploaded successfully."
-}
-```
-
-### PUT `/api/admin/faqs/{faq_id}`
-**Headers**
-```json
-{
-  "lang": "en (optional)",
-  "country": "SG (optional)",
-  "Authorization": "Bearer <token>"
-}
-```
-
-**Request body (application/json)**
-```json
-{
-  "question": "Updated question",
-  "answer": "Updated answer"
-}
-```
-
-**Response 200**
-```json
-{
-  "message": "FAQ updated successfully."
-}
-```
-
-### DELETE `/api/admin/faqs/{faq_id}`
-**Headers**
-```json
-{
-  "lang": "en (optional)",
-  "country": "SG (optional)",
-  "Authorization": "Bearer <token>"
-}
-```
-
-**Request body**
-```json
-{}
-```
-
-**Response 200**
-```json
-{
-  "message": "FAQ deleted successfully."
-}
-```
-
-### POST `/api/admin/contact-info`
-**Headers**
-```json
-{
-  "lang": "en (optional)",
-  "country": "SG (optional)",
-  "Authorization": "Bearer <token>"
-}
-```
-
-**Request body (application/json)**
-```json
-{
-  "address": "1 Example Street",
-  "phone": "+65 6000 0000",
-  "email": "info@example.com",
-  "working_hours": "Mon-Fri 9AM-6PM",
-  "country": "SG"
-}
-```
-
-**Response 200**
-```json
-{
-  "message": "Contact info uploaded successfully."
-}
-```
-
-### PUT `/api/admin/contact-info/{contact_id}`
-**Headers**
-```json
-{
-  "lang": "en (optional)",
-  "country": "SG (optional)",
-  "Authorization": "Bearer <token>"
-}
-```
-
-**Request body (application/json)**
-```json
-{
-  "address": "1 Example Street",
-  "phone": "+65 6000 0000",
-  "email": "info@example.com",
-  "working_hours": "Mon-Fri 9AM-6PM",
-  "country": "SG"
-}
-```
-
-**Response 200**
-```json
-{
-  "message": "Contact info updated successfully."
-}
-```
-
-### DELETE `/api/admin/contact-info/{contact_id}`
-**Headers**
-```json
-{
-  "lang": "en (optional)",
-  "country": "SG (optional)",
-  "Authorization": "Bearer <token>"
-}
-```
-
-**Request body**
-```json
-{}
-```
-
-**Response 200**
-```json
-{
-  "message": "Contact info deleted successfully."
-}
-```
-
-### POST `/api/admin/blogs`
-**Headers**
-```json
-{
-  "lang": "en (optional)",
-  "country": "SG (optional)",
-  "Authorization": "Bearer <token>"
-}
-```
-
-**Request body (application/json)**
-```json
-{
-  "blog": {
-    "id": 1,
-    "title": "How to select a PLC",
-    "categories": [
-      {
-        "id": 1,
-        "name": "Guide"
-      }
-    ],
-    "image_url": "https://cdn.example.com/blog.jpg",
-    "published_by": "PLC Automation",
-    "created_at": "01-01-2025",
-    "updated_at": "01-01-2025",
-    "content": "Long article body"
-  },
-  "categories": [
-    {
-      "id": 1,
-      "name": "Guide"
-    }
-  ]
-}
-```
-
-**Response 200**
-```json
-{
-  "message": "Blog uploaded successfully."
-}
-```
-
-### PUT `/api/admin/blogs/{blog_id}`
-**Headers**
-```json
-{
-  "lang": "en (optional)",
-  "country": "SG (optional)",
-  "Authorization": "Bearer <token>"
-}
-```
-
-**Request body (application/json)**
-```json
-{
-  "blog": {
-    "id": 1,
-    "title": "How to select a PLC",
-    "categories": [
-      {
-        "id": 1,
-        "name": "Guide"
-      }
-    ],
-    "image_url": "https://cdn.example.com/blog.jpg",
-    "published_by": "PLC Automation",
-    "created_at": "01-01-2025",
-    "updated_at": "01-01-2025",
-    "content": "Long article body"
-  },
-  "categories": [
-    {
-      "id": 1,
-      "name": "Guide"
-    }
-  ]
-}
-```
-
-**Response 200**
-```json
-{
-  "message": "Blog updated successfully."
-}
-```
-
-### DELETE `/api/admin/blogs/{blog_id}`
-**Headers**
-```json
-{
-  "lang": "en (optional)",
-  "country": "SG (optional)",
-  "Authorization": "Bearer <token>"
-}
-```
-
-**Request body**
-```json
-{}
-```
-
-**Response 200**
-```json
-{
-  "message": "Blog deleted successfully."
-}
-```
-
-### POST `/api/admin/jobs`
-**Headers**
-```json
-{
-  "lang": "en (optional)",
-  "country": "SG (optional)",
-  "Authorization": "Bearer <token>"
-}
-```
-
-**Request body (application/json)**
-```json
-{
-  "title": "PLC Engineer",
-  "country": "SG",
-  "location": "Singapore",
-  "job_type": "Full-time",
-  "posted_date": "01-01-2025",
-  "industry": "Automation",
-  "requirements": "...",
-  "responsibilities": "...",
+  "name": "New Product",
+  "part_number": "PN-001",
+  "manufacturer": "Siemens",
+  "image_url": "...",
   "description": "...",
-  "working_hours": "Mon-Fri 9AM-6PM"
+  "countries": ["Singapore", "Malaysia"]
 }
 ```
 
-**Response 200**
-```json
-{
-  "message": "Job uploaded successfully."
-}
-```
+### PUT `/admin/products/{product_id}`
+Same schema as POST `/admin/products`.
 
-### PUT `/api/admin/jobs/{job_id}`
-**Headers**
-```json
-{
-  "lang": "en (optional)",
-  "country": "SG (optional)",
-  "Authorization": "Bearer <token>"
-}
-```
+### DELETE `/admin/products/{product_id}`
 
-**Request body (application/json)**
-```json
-{
-  "title": "PLC Engineer",
-  "country": "SG",
-  "location": "Singapore",
-  "job_type": "Full-time",
-  "posted_date": "01-01-2025",
-  "industry": "Automation",
-  "requirements": "...",
-  "responsibilities": "...",
-  "description": "...",
-  "working_hours": "Mon-Fri 9AM-6PM"
-}
-```
-
-**Response 200**
-```json
-{
-  "message": "Job updated successfully."
-}
-```
-
-### DELETE `/api/admin/jobs/{job_id}`
-**Headers**
-```json
-{
-  "lang": "en (optional)",
-  "country": "SG (optional)",
-  "Authorization": "Bearer <token>"
-}
-```
-
-**Request body**
-```json
-{}
-```
-
-**Response 200**
-```json
-{
-  "message": "Job deleted successfully."
-}
-```
-
-### POST `/api/admin/categories`
-**Headers**
-```json
-{
-  "lang": "en (optional)",
-  "country": "SG (optional)",
-  "Authorization": "Bearer <token>"
-}
-```
-
-**Request body (application/json)**
-```json
-{
-  "name": "PLC Systems"
-}
-```
-
-**Response 200**
-```json
-{
-  "message": "Category uploaded successfully."
-}
-```
-
-### PUT `/api/admin/categories/{category_id}`
-**Headers**
-```json
-{
-  "lang": "en (optional)",
-  "country": "SG (optional)",
-  "Authorization": "Bearer <token>"
-}
-```
-
-**Request body (application/json)**
-```json
-{
-  "name": "PLC Systems"
-}
-```
-
-**Response 200**
-```json
-{
-  "message": "Category updated successfully."
-}
-```
-
-### DELETE `/api/admin/categories/{category_id}`
-**Headers**
-```json
-{
-  "lang": "en (optional)",
-  "country": "SG (optional)",
-  "Authorization": "Bearer <token>"
-}
-```
-
-**Request body**
-```json
-{}
-```
-
-**Response 200**
-```json
-{
-  "message": "Category deleted successfully."
-}
-```
-
-### POST `/api/admin/manufacturers`
-**Headers**
-```json
-{
-  "lang": "en (optional)",
-  "country": "SG (optional)",
-  "Authorization": "Bearer <token>"
-}
-```
-
-**Request body (application/json)**
-```json
-{
-  "name": "Siemens"
-}
-```
-
-**Response 200**
-```json
-{
-  "message": "Manufacturer uploaded successfully."
-}
-```
-
-### PUT `/api/admin/manufacturers/{manufacturer_id}`
-**Headers**
-```json
-{
-  "lang": "en (optional)",
-  "country": "SG (optional)",
-  "Authorization": "Bearer <token>"
-}
-```
-
-**Request body (application/json)**
-```json
-{
-  "name": "Siemens"
-}
-```
-
-**Response 200**
-```json
-{
-  "message": "Manufacturer updated successfully."
-}
-```
-
-### DELETE `/api/admin/manufacturers/{manufacturer_id}`
-**Headers**
-```json
-{
-  "lang": "en (optional)",
-  "country": "SG (optional)",
-  "Authorization": "Bearer <token>"
-}
-```
-
-**Request body**
-```json
-{}
-```
-
-**Response 200**
-```json
-{
-  "message": "Manufacturer deleted successfully."
-}
-```
-
-### POST `/api/admin/countries`
-**Headers**
-```json
-{
-  "lang": "en (optional)",
-  "country": "SG (optional)",
-  "Authorization": "Bearer <token>"
-}
-```
-
-**Request body (application/json)**
-```json
-{
-  "name": "Singapore",
-  "code": "SG"
-}
-```
-
-**Response 200**
-```json
-{
-  "message": "Country uploaded successfully."
-}
-```
-
-### PUT `/api/admin/countries/{country_id}`
-**Headers**
-```json
-{
-  "lang": "en (optional)",
-  "country": "SG (optional)",
-  "Authorization": "Bearer <token>"
-}
-```
-
-**Request body (application/json)**
-```json
-{
-  "name": "Singapore",
-  "code": "SG"
-}
-```
-
-**Response 200**
-```json
-{
-  "message": "Country updated successfully."
-}
-```
-
-### DELETE `/api/admin/countries/{country_id}`
-**Headers**
-```json
-{
-  "lang": "en (optional)",
-  "country": "SG (optional)",
-  "Authorization": "Bearer <token>"
-}
-```
-
-**Request body**
-```json
-{}
-```
-
-**Response 200**
-```json
-{
-  "message": "Country deleted successfully."
-}
-```
-
-### GET `/api/admin/quotes?search=<optional>&page=1&per_page=10`
-**Headers**
-```json
-{
-  "lang": "en (optional)",
-  "country": "SG (optional)",
-  "Authorization": "Bearer <token>"
-}
-```
-
-**Request body**
-```json
-{}
-```
-
+### GET `/admin/quotes?search={search}&page={page}&per_page={per_page}`
 **Response 200**
 ```json
 {
@@ -1396,332 +340,61 @@ Environment variables are loaded from `.env` via `app/config.py`.
   "quote_previews": [
     {
       "name": "John Doe",
-      "company_name": "ACME Industrial",
-      "created_at": "2026-01-01T00:00:00+00:00",
+      "company_name": "Tech Corp",
+      "created_at": "...",
       "is_paid": false,
-      "total_amount": 0
+      "total_amount": 1000
     }
   ]
 }
 ```
 
-### GET `/api/admin/quote/{quote_id}`
-**Headers**
-```json
-{
-  "lang": "en (optional)",
-  "country": "SG (optional)",
-  "Authorization": "Bearer <token>"
-}
-```
+### GET `/admin/quote/{quote_id}`
+**Response 200**
+Full quote data including `product_previews_with_quantity`.
 
+### POST `/admin/blogs`
 **Request body**
 ```json
-{}
-```
-
-**Response 200**
-```json
 {
-  "quote_with_product_previews_with_quantity": {
-    "id": 1,
-    "name": "John Doe",
-    "company_name": "ACME Industrial",
-    "country_code": "65",
-    "phone": "98765432",
-    "email": "john@acme.com",
-    "message": "Need quote",
-    "created_at": "2026-01-01T00:00:00+00:00",
-    "is_paid": false,
-    "total_amount": 0,
-    "product_previews_with_quantity": [
-      {
-        "id": 1,
-        "name": "SIMATIC S7-1500 CPU",
-        "part_number": "CPU-1510",
-        "manufacturer": {
-          "id": 1,
-          "name": "Siemens"
-        },
-        "image_url": "https://cdn.example.com/products/cpu-1510.jpg",
-        "quantity": 2
-      }
-    ]
-  }
+  "title": "New Blog",
+  "image_url": "...",
+  "published_by": "Admin",
+  "created_at": "01-01-2025",
+  "updated_at": "01-01-2025",
+  "content": "...",
+  "categories": [{ "id": 1, "name": "Guide" }]
 }
 ```
 
-### POST `/api/admin/quotes`
-**Headers**
+### GET `/admin/approvals?page={page}&per_page={per_page}`
+**Request body** (used for filtering)
 ```json
 {
-  "lang": "en (optional)",
-  "country": "SG (optional)",
-  "Authorization": "Bearer <token>"
+  "id": null,
+  "type": null,
+  "is_approved": null
 }
 ```
-
-**Request body (application/json)**
-```json
-{
-  "name": "John Doe",
-  "company_name": "ACME Industrial",
-  "country_code": "65",
-  "phone": "98765432",
-  "email": "john@acme.com",
-  "message": "Need quote",
-  "is_paid": false,
-  "total_amount": 0,
-  "product_previews_with_quantity": [
-    {
-      "id": 1,
-      "name": "SIMATIC S7-1500 CPU",
-      "part_number": "CPU-1510",
-      "manufacturer": {
-        "id": 1,
-        "name": "Siemens"
-      },
-      "image_url": "https://cdn.example.com/products/cpu-1510.jpg",
-      "quantity": 2
-    }
-  ]
-}
-```
-
-**Response 200**
-```json
-{
-  "message": "Quote added successfully."
-}
-```
-
-### PUT `/api/admin/quote/{quote_id}`
-**Headers**
-```json
-{
-  "lang": "en (optional)",
-  "country": "SG (optional)",
-  "Authorization": "Bearer <token>"
-}
-```
-
-**Request body (application/json)**
-```json
-{
-  "name": "John Doe",
-  "company_name": "ACME Industrial",
-  "country_code": "65",
-  "phone": "98765432",
-  "email": "john@acme.com",
-  "message": "Updated quote request",
-  "is_paid": true,
-  "total_amount": 500,
-  "product_previews_with_quantity": [
-    {
-      "id": 1,
-      "name": "SIMATIC S7-1500 CPU",
-      "part_number": "CPU-1510",
-      "manufacturer": {
-        "id": 1,
-        "name": "Siemens"
-      },
-      "image_url": "https://cdn.example.com/products/cpu-1510.jpg",
-      "quantity": 1
-    }
-  ]
-}
-```
-
-**Response 200**
-```json
-{
-  "message": "Quote updated successfully."
-}
-```
-
-### DELETE `/api/admin/quote/{quote_id}`
-**Headers**
-```json
-{
-  "lang": "en (optional)",
-  "country": "SG (optional)",
-  "Authorization": "Bearer <token>"
-}
-```
-
-**Request body**
-```json
-{}
-```
-
-**Response 200**
-```json
-{
-  "message": "Quote deleted successfully."
-}
-```
-
-### GET `/api/admin/admin_logs?date=<optional: YYYY-MM-DD>`
-**Headers**
-```json
-{
-  "lang": "en (optional)",
-  "country": "SG (optional)",
-  "Authorization": "Bearer <token>"
-}
-```
-
-**Request body**
-```json
-{}
-```
-
-**Response 200**
-- Downloads `admin_logs_<date>.log`
-
-**Response 403**
-```json
-{
-  "detail": "Only admin can access logs."
-}
-```
-
-**Response 404**
-```json
-{
-  "detail": "Log file for <date> not found."
-}
-```
-
-### GET `/api/admin/approvals?approval_id=<optional>&approval_type=<optional>&is_approved=<optional>&page=1&per_page=10`
-**Headers**
-```json
-{
-  "lang": "en (optional)",
-  "country": "SG (optional)",
-  "Authorization": "Bearer <token>"
-}
-```
-
-**Request body**
-```json
-{}
-```
-
 **Response 200**
 ```json
 {
   "page": 1,
   "per_page": 10,
   "total": 1,
-  "approvals": [
-    {
-      "id": 1,
-      "type": "UPDATE-Product",
-      "payload": "{\"product_id\": 1, \"field\": \"price\", \"new_value\": 500}",
-      "is_approved": false,
-      "requester": "updater_1",
-      "request_date": "2026-01-01",
-      "attachment_url": "https://cdn.example.com/uploads/change.pdf"
-    }
-  ]
+  "approvals": [...]
 }
 ```
 
-### POST `/api/admin/approvals`
-**Headers**
-```json
-{
-  "lang": "en (optional)",
-  "country": "SG (optional)",
-  "Authorization": "Bearer <token>"
-}
-```
-
-**Request body (application/json)**
-```json
-{
-  "type": "ADD_Product",
-  "payload": "{\"product_id\": 1, \"field\": \"price\", \"new_value\": 500}",
-  "is_approved": false
-}
-```
-
-**Optional attachment**
-- `attachment` (file)
-
-**Response 200**
-```json
-{
-  "message": "Approval added successfully."
-}
-```
-
-### DELETE `/api/admin/approvals/{approval_id}`
-**Headers**
-```json
-{
-  "lang": "en (optional)",
-  "country": "SG (optional)",
-  "Authorization": "Bearer <token>"
-}
-```
-
-**Request body**
-```json
-{}
-```
-
-**Response 200**
-```json
-{
-  "message": "Approval deleted successfully."
-}
-```
-
-### PUT `/api/admin/approvals/{approval_id}/approve`
-**Headers**
-```json
-{
-  "lang": "en (optional)",
-  "country": "SG (optional)",
-  "Authorization": "Bearer <token>"
-}
-```
-
-**Request body**
-```json
-{}
-```
-
-**Response 200**
-```json
-{
-  "message": "Approval approved successfully."
-}
-```
-
-### PUT `/api/admin/approvals/{approval_id}/reject`
-**Headers**
-```json
-{
-  "lang": "en (optional)",
-  "country": "SG (optional)",
-  "Authorization": "Bearer <token>"
-}
-```
-
-**Request body**
-```json
-{}
-```
-
-**Response 200**
-```json
-{
-  "message": "Approval rejected successfully."
-}
-```
+### POST `/admin/approvals`
+**Content-Type**: `multipart/form-data`
+- `payload`: JSON string matching `ApprovalRequest`
+- `attachment`: (optional file)
 
 ---
 
+## Logging
+
+### GET `/admin/log/{log_type}?date={YYYY-MM-DD}`
+- `log_type`: `web`, `error`, `admin`, `debug`
+- Returns a log file for download or redirects to storage.
