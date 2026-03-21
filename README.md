@@ -24,7 +24,7 @@ Base URL: `http://localhost:8000/api`
   {
     "id": 1,
     "question": "What is a PLC?",
-    "answer": "Programmable Logic Controller..."
+    "answer": "Programmable Logic Controller is an industrial computer control system..."
   }
 ]
 ```
@@ -35,10 +35,10 @@ Base URL: `http://localhost:8000/api`
 [
   {
     "id": 1,
-    "address": "123 Main St",
+    "address": "123 Main St, Singapore 123456",
     "phone": "+65 1234 5678",
-    "email": "contact@example.com",
-    "working_hours": "9am-6pm",
+    "email": "contact@plc-automation.com",
+    "working_hours": "Mon-Fri: 9am-6pm",
     "country": "Singapore"
   }
 ]
@@ -46,13 +46,23 @@ Base URL: `http://localhost:8000/api`
 
 ### GET `/contact-info/{country}`
 **Response 200**
-Same as `/contact-info` but returns a single object.
+```json
+{
+  "id": 1,
+  "address": "123 Main St, Singapore 123456",
+  "phone": "+65 1234 5678",
+  "email": "contact@plc-automation.com",
+  "working_hours": "Mon-Fri: 9am-6pm",
+  "country": "Singapore"
+}
+```
 
 ### GET `/categories`
 **Response 200**
 ```json
 [
-  { "id": 1, "name": "CPU" }
+  { "id": 1, "name": "CPU" },
+  { "id": 2, "name": "I/O Modules" }
 ]
 ```
 
@@ -60,7 +70,8 @@ Same as `/contact-info` but returns a single object.
 **Response 200**
 ```json
 [
-  { "id": 1, "name": "Siemens" }
+  { "id": 1, "name": "Siemens" },
+  { "id": 2, "name": "Allen-Bradley" }
 ]
 ```
 
@@ -68,7 +79,8 @@ Same as `/contact-info` but returns a single object.
 **Response 200**
 ```json
 [
-  { "id": 1, "name": "Singapore", "code": "SG" }
+  { "id": 1, "name": "Singapore", "code": "SG" },
+  { "id": 2, "name": "Malaysia", "code": "MY" }
 ]
 ```
 
@@ -85,7 +97,7 @@ Same as `/contact-info` but returns a single object.
   "country_code": "SG",
   "phone": "12345678",
   "email": "john@example.com",
-  "message": "I need more information."
+  "message": "I need more information about the S7-1200 series."
 }
 ```
 
@@ -110,6 +122,7 @@ Same as `/contact-info` but returns a single object.
       "name": "S7-1200",
       "part_number": "6ES7214-1AG40-0XB0",
       "manufacturer": { "id": 1, "name": "Siemens" },
+      "image_url": "https://example.com/s7-1200.jpg",
       "quantity": 5
     }
   ]
@@ -132,7 +145,15 @@ Same as `/contact-info` but returns a single object.
 **Response 200**
 ```json
 {
-  "product_previews": [...],
+  "product_previews": [
+    {
+      "id": 1,
+      "name": "S7-1200",
+      "part_number": "6ES7214-1AG40-0XB0",
+      "manufacturer": { "id": 1, "name": "Siemens" },
+      "image_url": "https://example.com/s7-1200.jpg"
+    }
+  ],
   "page": 1,
   "per_page": 30,
   "total": 100
@@ -149,7 +170,8 @@ Same as `/contact-info` but returns a single object.
       "name": "S7-1200",
       "part_number": "6ES7214-1AG40-0XB0",
       "manufacturer": { "id": 1, "name": "Siemens" },
-      "description": "Powerful PLC"
+      "image_url": "https://example.com/s7-1200.jpg",
+      "description": "Compact and powerful PLC for industrial automation tasks."
     },
     "stock": true
   }
@@ -160,10 +182,18 @@ Same as `/contact-info` but returns a single object.
 **Response 200**
 ```json
 {
-  "product_previews": [...],
+  "product_previews": [
+    {
+      "id": 1,
+      "name": "S7-1200",
+      "part_number": "6ES7214-1AG40-0XB0",
+      "manufacturer": { "id": 1, "name": "Siemens" },
+      "image_url": "https://example.com/s7-1200.jpg"
+    }
+  ],
   "page": 1,
   "per_page": 10,
-  "total": 10
+  "total": 1
 }
 ```
 
@@ -190,7 +220,7 @@ Same as `/contact-info` but returns a single object.
       "id": 1,
       "title": "Getting started with PLCs",
       "categories": [{ "id": 1, "name": "Guide" }],
-      "image_url": "...",
+      "image_url": "https://example.com/blog.jpg",
       "published_by": "Admin",
       "created_at": "01-01-2025",
       "updated_at": "01-01-2025"
@@ -204,13 +234,15 @@ Same as `/contact-info` but returns a single object.
 ```json
 {
   "id": 1,
-  "title": "...",
-  "categories": [...],
-  "image_url": "...",
-  "published_by": "...",
-  "created_at": "...",
-  "updated_at": "...",
-  "content": "Full blog content here..."
+  "title": "Getting started with PLCs",
+  "categories": [
+    { "id": 1, "name": "Guide" }
+  ],
+  "image_url": "https://example.com/blog.jpg",
+  "published_by": "Admin",
+  "created_at": "01-01-2025",
+  "updated_at": "01-01-2025",
+  "content": "<h1>Introduction</h1><p>Full blog content here...</p>"
 }
 ```
 
@@ -249,10 +281,10 @@ Same as `/contact-info` but returns a single object.
   "job_type": "Full-time",
   "posted_date": "01-01-2025",
   "industry": "Automation",
-  "requirements": "...",
-  "responsibilities": "...",
-  "description": "...",
-  "working_hours": "9am-6pm"
+  "requirements": "Degree in Engineering, 3 years experience in PLC programming.",
+  "responsibilities": "Programming PLCs, site commissioning, and technical support.",
+  "description": "Join our team as a PLC Engineer to work on exciting industrial projects.",
+  "working_hours": "Mon-Fri: 9am-6pm"
 }
 ```
 
@@ -270,7 +302,7 @@ Same as `/contact-info` but returns a single object.
   "email": "john@doe.com",
   "country_code": "SG",
   "phone": "12345678",
-  "experience": "5 years"
+  "experience": "5 years in industrial automation"
 }
 ```
 
@@ -282,7 +314,7 @@ Same as `/contact-info` but returns a single object.
 **Response 200**
 ```json
 {
-  "uuid": "...",
+  "uuid": "550e8400-e29b-41d4-a716-446655440000",
   "email": "admin@example.com",
   "user_role": "admin"
 }
@@ -302,13 +334,13 @@ Same as `/contact-info` but returns a single object.
 **Content-Type**: `multipart/form-data`
 **Request body**
 - `payload`: JSON matching `NewsLetterContentRequest`
-- `attachments`: (optional files)
+- `attachments`: (optional list of files)
 
 `payload` schema:
 ```json
 {
   "subject": "Weekly Updates",
-  "content": "HTML or text content"
+  "content": "<h1>Our Latest Products</h1><p>Check out our new catalog...</p>"
 }
 ```
 
@@ -319,8 +351,8 @@ Same as `/contact-info` but returns a single object.
   "name": "New Product",
   "part_number": "PN-001",
   "manufacturer": "Siemens",
-  "image_url": "...",
-  "description": "...",
+  "image_url": "https://example.com/product.jpg",
+  "description": "High performance PLC module for large scale systems.",
   "countries": ["Singapore", "Malaysia"]
 }
 ```
@@ -341,7 +373,7 @@ Same schema as POST `/admin/products`.
     {
       "name": "John Doe",
       "company_name": "Tech Corp",
-      "created_at": "...",
+      "created_at": "01-03-2025",
       "is_paid": false,
       "total_amount": 1000
     }
@@ -351,18 +383,43 @@ Same schema as POST `/admin/products`.
 
 ### GET `/admin/quote/{quote_id}`
 **Response 200**
-Full quote data including `product_previews_with_quantity`.
+```json
+{
+  "quote_with_product_previews_with_quantity": {
+    "name": "John Doe",
+    "company_name": "Tech Corp",
+    "country_code": "SG",
+    "phone": "12345678",
+    "email": "john@example.com",
+    "message": "Request for quote for the following items.",
+    "created_at": "01-03-2025",
+    "id": 1,
+    "is_paid": false,
+    "total_amount": 1000,
+    "product_previews_with_quantity": [
+      {
+        "id": 1,
+        "name": "S7-1200",
+        "part_number": "6ES7214-1AG40-0XB0",
+        "manufacturer": { "id": 1, "name": "Siemens" },
+        "image_url": "https://example.com/s7-1200.jpg",
+        "quantity": 5
+      }
+    ]
+  }
+}
+```
 
 ### POST `/admin/blogs`
 **Request body**
 ```json
 {
-  "title": "New Blog",
-  "image_url": "...",
+  "title": "New Blog Post",
+  "image_url": "https://example.com/blog.jpg",
   "published_by": "Admin",
-  "created_at": "01-01-2025",
-  "updated_at": "01-01-2025",
-  "content": "...",
+  "created_at": "01-03-2025",
+  "updated_at": "01-03-2025",
+  "content": "This is the full content of the blog post in HTML or Markdown.",
   "categories": [{ "id": 1, "name": "Guide" }]
 }
 ```
@@ -371,9 +428,9 @@ Full quote data including `product_previews_with_quantity`.
 **Request body** (used for filtering)
 ```json
 {
-  "id": null,
-  "type": null,
-  "is_approved": null
+  "id": 1,
+  "type": "Quote",
+  "is_approved": false
 }
 ```
 **Response 200**
@@ -382,14 +439,35 @@ Full quote data including `product_previews_with_quantity`.
   "page": 1,
   "per_page": 10,
   "total": 1,
-  "approvals": [...]
+  "approval_previews": [
+    {
+      "type": "POST Quote",
+      "payload": "{\"quote_id\": 1}",
+      "is_approved": false,
+      "requester": "user@example.com",
+      "request_date": "01-03-2025",
+      "attachment_url": "https://example.com/quote.pdf"
+    }
+  ]
 }
 ```
 
 ### POST `/admin/approvals`
 **Content-Type**: `multipart/form-data`
+**Request body**
 - `payload`: JSON string matching `ApprovalRequest`
 - `attachment`: (optional file)
+
+`payload` schema:
+```json
+{
+  "type": "POST Quote",
+  "payload": "{\"quote_id\": 1, \"amount\": 1000}",
+  "is_approved": false,
+  "requester": "user@example.com",
+  "request_date": "01-03-2025"
+}
+```
 
 ---
 

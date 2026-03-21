@@ -195,7 +195,7 @@ class ApprovalPreviewListResponse(BaseModel):
     page: int
     per_page: int
     total: int
-    approvals: List[ApprovalPreviewDataResponse] = []
+    approval_previews: List[ApprovalPreviewDataResponse] = []
 
 
 class BlogPreviewListResponse(BaseModel):
