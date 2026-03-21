@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import List, Optional
+from typing import Optional
 
 from app.models.db.data_models import Manufacturer, Product
 from app.utils.supabase_client_util import get_supabase_client

@@ -12,23 +12,19 @@ from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status,
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.responses import FileResponse, RedirectResponse
 
-from pydantic import ValidationError
 
 from app.models.db.data_models import (
-    Approval as ApprovalDb,
     Blog as BlogDb,
     Category as CategoryDb,
     ContactInfo as ContactInfoDb,
     Country as CountryDb,
     FAQ as FAQDb,
     Job as JobDb,
-    Product,
     Manufacturer as ManufacturerDb,
 )
 from app.models.api.response_models import (
     ApiResponse,
     ApprovalPreviewListResponse,
-    ApprovalPreviewDataResponse,
     BatchProductUploadResultResponse,
     QuotePreviewListResponse,
     QuotePreviewResponse,
@@ -62,14 +58,8 @@ from app.dependencies import (
     admin_approvals_service,
     admin_faq_service,
     admin_job_service,
-    email_service,
     jwt_service,
-    manufacturer_repo,
-    newsletter_repo,
-    product_repo,
     quotes_service,
-    country_repo,
-    approval_repo,
     storage_service,
     supabase_service
 )

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Dict, List, Optional
+from typing import List
 
 from app.models.domain.domain_models import Manufacturer as DomainManufacturer
 from app.models.domain.domain_models import ProductPreviewWithQuantity

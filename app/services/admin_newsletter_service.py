@@ -11,7 +11,6 @@ from app.repositories.newsletter_subscribers_repository import (
 )
 from app.services.email_service import EmailService
 from app.services.log_service import LogService
-from app.config import settings
 
 
 class AdminNewsletterService:

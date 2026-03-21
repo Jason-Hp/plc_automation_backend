@@ -1,11 +1,8 @@
 from __future__ import annotations
 
-import pytz
 
-from datetime import datetime, timezone
 
 from app.models.db.data_models import Quote
-from app.config import settings
 from app.utils.supabase_client_util import get_supabase_client
 
 
