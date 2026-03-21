@@ -42,18 +42,6 @@ class ProductPreviewWithQuantity(ProductPreview):
     quantity: int
 
 
-class BlogPreview(BaseModel):
-    id: Optional[int] = None
-    title: str
-    categories: List[Category]
-    image_url: str
-    published_by: str
-
-    # DD - MM - YYYY
-    created_at: str
-    updated_at: str
-
-
 class ApprovalPreview(BaseModel):
     type: str
     payload: str

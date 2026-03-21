@@ -4,8 +4,9 @@ from app.utils.supabase_client_util import get_supabase_client
 
 class SupabaseService:
     def __init__(self):
-        # Lazy client so the app can boot before `.env` is filled.
         self.client = get_supabase_client()
+        if self.client is None:
+            raise RuntimeError("Supabase client is not configured.")
     
     def create_user(self, email: str, password: str, user_role: str):
         """
@@ -22,10 +23,6 @@ class SupabaseService:
         Raises:
             Exception: If user creation fails
         """
-        if self.client is None:
-            raise RuntimeError(
-                "Supabase is not configured. Please set `supabase_url` and `supabase_key` in .env."
-            )
         try:
             response = self.client.auth.admin.create_user(
                 email=email,

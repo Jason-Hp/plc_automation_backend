@@ -17,7 +17,7 @@ All endpoints below are under `/api`.
 This backend follows a clear separation of concerns:
 - API routes act as the controller layer (they accept/return API request/response DTOs).
 - Business logic lives in services.
-- Data access lives in repositories (Supabase-backed when credentials are configured, otherwise in-memory fallbacks).
+- Data access lives in repositories (Supabase-backed).
 
 ## Supabase / Environment Setup
 
@@ -25,7 +25,7 @@ This backend is Supabase-ready. Supabase-backed repositories (products, quotes, 
 - `SUPABASE_URL`
 - `SUPABASE_KEY`
 
-If either `SUPABASE_URL` or `SUPABASE_KEY` is left empty, the app will fall back to in-memory repositories (useful before you fill credentials).
+These variables are REQUIRED for the app to function. If either is missing, the app will raise a `RuntimeError` on startup.
 
 Semantic search uses:
 - `OPENAI_API_KEY`
@@ -100,8 +100,8 @@ Environment variables are loaded from `.env` via `app/config.py`.
 ```
 
 **Request body (multipart/form-data)**
-- `payload` (json string)
-- `attachment` (file, optional)
+- `payload`: The JSON data for the quote (follows the schema below)
+- `attachment`: (file, optional)
 
 `payload` JSON schema:
 ```json
@@ -413,12 +413,7 @@ Environment variables are loaded from `.env` via `app/config.py`.
 ```json
 {
   "search": "PLC",
-  "categories": [
-    {
-      "id": 1,
-      "name": "Guide"
-    }
-  ]
+  "categories": ["Guide"]
 }
 ```
 
@@ -541,16 +536,21 @@ Environment variables are loaded from `.env` via `app/config.py`.
 
 **Response 200**
 ```json
-[
-  {
-    "id": 1,
-    "title": "PLC Engineer",
-    "country": "SG",
-    "location": "Singapore",
-    "job_type": "Full-time",
-    "posted_date": "01-01-2025"
-  }
-]
+{
+  "page": 1,
+  "per_page": 10,
+  "total": 1,
+  "jobs": [
+    {
+      "id": 1,
+      "title": "PLC Engineer",
+      "country": "SG",
+      "location": "Singapore",
+      "job_type": "Full-time",
+      "posted_date": "01-01-2025"
+    }
+  ]
+}
 ```
 
 ### GET `/api/jobs/{job_id}`
@@ -595,8 +595,8 @@ Environment variables are loaded from `.env` via `app/config.py`.
 ```
 
 **Request body (multipart/form-data)**
-- `payload` (json string)
-- `resume` (file, required)
+- `payload`: The JSON data for the application (follows the schema below)
+- `resume`: (file, required)
 
 `payload` JSON schema:
 ```json
@@ -827,8 +827,8 @@ Environment variables are loaded from `.env` via `app/config.py`.
 ```
 
 **Request body (multipart/form-data)**
-- `payload` (json string)
-- `attachments` (file list, optional)
+- `payload`: The JSON data for the newsletter (follows the schema below)
+- `attachments`: (list of files, optional)
 
 `payload` JSON schema:
 ```json

@@ -10,22 +10,16 @@ from app.utils.supabase_client_util import get_supabase_client
 class QuoteProductRepository:
     """
     Repository for the `quotes_products` JOIN TABLE.
-
-    In this backend version we keep it in-memory as:
-      quote_id -> list[ProductPreviewWithQuantity]
     """
 
     def __init__(self) -> None:
-        self._quote_products: Dict[int, List[ProductPreviewWithQuantity]] = {}
         self._client = get_supabase_client()
+        if self._client is None:
+            raise RuntimeError("Supabase client is not configured.")
 
     def get_product_previews_with_quantity_by_quote_id(
         self, quote_id: int
     ) -> List[ProductPreviewWithQuantity]:
-        if self._client is None:
-            # Return a copy to avoid accidental mutation from callers.
-            return list(self._quote_products.get(quote_id, []))
-
         join_resp = (
             self._client.table("quotes_products")
             .select("product_id,quantity")
@@ -89,10 +83,6 @@ class QuoteProductRepository:
     def add_products_to_quote_with_quantity(
         self, quote_id: int, product_previews_with_quantity: List[ProductPreviewWithQuantity]
     ) -> None:
-        if self._client is None:
-            self._quote_products[quote_id] = list(product_previews_with_quantity)
-            return
-
         insert_rows = []
         for p in product_previews_with_quantity:
             if p.id is None:
@@ -107,17 +97,9 @@ class QuoteProductRepository:
     def update_products_to_quote_with_quantity(
         self, quote_id: int, product_previews_with_quantity: List[ProductPreviewWithQuantity]
     ) -> None:
-        if self._client is None:
-            self._quote_products[quote_id] = list(product_previews_with_quantity)
-            return
-
         self._client.table("quotes_products").delete().eq("quote_id", quote_id).execute()
         self.add_products_to_quote_with_quantity(quote_id, product_previews_with_quantity)
 
     def delete_products_to_quote_with_quantity(self, quote_id: int) -> None:
-        if self._client is None:
-            self._quote_products.pop(quote_id, None)
-            return
-
         self._client.table("quotes_products").delete().eq("quote_id", quote_id).execute()
 

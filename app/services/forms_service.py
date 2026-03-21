@@ -1,9 +1,6 @@
 from __future__ import annotations
 
-import json
-
 from fastapi import HTTPException, UploadFile
-from pydantic import ValidationError
 
 from app.config import settings
 from app.models.api.request_models import (
@@ -53,18 +50,11 @@ class FormsService:
     async def submit_quote(
         self,
         *,
-        payload: str,
+        payload: QuoteWithProductPreviewsWithQuantityRequest,
         attachment: UploadFile | None,
     ) -> ApiResponse:
-        try:
-            parsed_payload = QuoteWithProductPreviewsWithQuantityRequest.model_validate_json(
-                payload
-            )
-        except ValidationError as exc:
-            raise HTTPException(status_code=422, detail=json.loads(exc.json())) from exc
-
-        self._ensure_digits(parsed_payload.phone, "phone number")
-        self._quotes_service.create_quote(request=parsed_payload)
+        self._ensure_digits(payload.phone, "phone number")
+        self._quotes_service.create_quote(request=payload)
 
         attachments = (
             [
@@ -80,9 +70,9 @@ class FormsService:
         )
 
         self._email_service.send(
-            subject=f"Enquiry by {parsed_payload.name}",
+            subject=f"Enquiry by {payload.name}",
             body="",
-            html_body=format_form(parsed_payload),
+            html_body=format_form(payload),
             to_addrs=[settings.quote_and_enquiry_email],
             attachments=attachments,
         )

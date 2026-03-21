@@ -1,13 +1,22 @@
-from fastapi import APIRouter, UploadFile, File, Form
+from fastapi import APIRouter, UploadFile, File, Query
 
 from app.dependencies import public_jobs_service
-from app.models.api.response_models import ApiResponse, JobPreviewResponse, JobResponse
+from app.models.api.request_models import JobApplicationRequest
+from app.models.api.response_models import (
+    ApiResponse,
+    JobPreviewResponse,
+    JobResponse,
+    JobPreviewListResponse,
+)
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
 
-@router.get("/", response_model=list[JobPreviewResponse])
-async def get_job_postings() -> list[JobPreviewResponse]:
-    return public_jobs_service.list_job_postings()
+
+@router.get("/", response_model=JobPreviewListResponse)
+async def get_job_postings(
+    page: int = Query(1, ge=1), per_page: int = Query(10, ge=1, le=100)
+) -> JobPreviewListResponse:
+    return public_jobs_service.list_job_postings(page=page, per_page=per_page)
 
 
 @router.get("/{job_id}", response_model=JobResponse)
@@ -18,7 +27,7 @@ async def get_job_posting(job_id: int) -> JobResponse:
 @router.post("/{job_id}/application", response_model=ApiResponse)
 async def submit_job_application(
     job_id: int,
-    payload: str = Form(...),
+    payload: JobApplicationRequest,
     resume: UploadFile = File(...),
 ) -> ApiResponse:
     return await public_jobs_service.submit_job_application(

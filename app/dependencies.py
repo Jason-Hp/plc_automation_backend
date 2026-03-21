@@ -1,5 +1,6 @@
 from app.repositories.approval_repository import ApprovalRepository
 from app.repositories.blog_repository import BlogRepository
+from app.repositories.blog_category_repository import BlogCategoryRepository
 from app.repositories.category_repository import CategoryRepository
 from app.repositories.contact_info_repository import ContactInfoRepository
 from app.repositories.country_repository import CountryRepository
@@ -34,6 +35,7 @@ approval_repo = ApprovalRepository()
 faq_repo = FaqRepository()
 contact_info_repo = ContactInfoRepository()
 blog_repo = BlogRepository()
+blog_category_repo = BlogCategoryRepository()
 product_repo = ProductRepository()
 job_repo = JobRepository()
 category_repo = CategoryRepository()
@@ -52,7 +54,9 @@ quotes_service = QuotesService(quote_repo=quote_repo, quote_product_repo=quote_p
 
 admin_faq_service = AdminFaqService(faq_repo=faq_repo)
 
-admin_blog_service = AdminBlogService(blog_repo=blog_repo, category_repo=category_repo)
+admin_blog_service = AdminBlogService(
+    blog_repo=blog_repo, category_repo=category_repo, blog_category_repo=blog_category_repo
+)
 
 admin_job_service = AdminJobService(job_repo=job_repo)
 
@@ -96,7 +100,9 @@ public_products_service = PublicProductsService(
     product_repo=product_repo, country_repo=country_repo
 )
 
-public_blogs_service = PublicBlogsService(blog_repo=blog_repo)
+public_blogs_service = PublicBlogsService(
+    blog_repo=blog_repo, blog_category_repo=blog_category_repo
+)
 
 public_jobs_service = PublicJobsService(
     job_repo=job_repo,

@@ -8,7 +8,7 @@ import pytz
 from pathlib import Path
 from typing import Optional
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status, Query
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status, Query
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.responses import FileResponse, RedirectResponse
 
@@ -27,10 +27,10 @@ from app.models.db.data_models import (
 )
 from app.models.api.response_models import (
     ApiResponse,
-    ApprovalResponse,
+    ApprovalPreviewListResponse,
     ApprovalPreviewDataResponse,
     BatchProductUploadResultResponse,
-    QuoteListResponse,
+    QuotePreviewListResponse,
     QuotePreviewResponse,
     QuoteWithProductPreviewsWithQuantityResponse,
     QuoteWithProductPreviewsWithQuantityDataResponse,
@@ -90,14 +90,14 @@ async def verify_token(credentials: HTTPAuthorizationCredentials = Depends(secur
             detail=str(exc)
         ) from exc
 
-async def get_user_role(token_data: dict) -> UserRole:
+def get_user_role(token_data: dict) -> UserRole:
     user_role = token_data.get("app_metadata", {}).get("user_role")
     try:
         return UserRole(user_role)
     except ValueError:
         raise HTTPException(status_code=403, detail="Invalid user role.")
     
-async def is_admin(token_data: dict) -> bool:
+def is_admin(token_data: dict) -> bool:
     if get_user_role(token_data) == UserRole.ADMIN:
         return True
     raise HTTPException(status_code=403, detail="Admin privileges required.")
@@ -216,7 +216,7 @@ async def delete_product(
 
 @router.post("/broadcast-newsletter", response_model=ApiResponse)
 async def broadcast_newsletter(
-    payload: str = Form(...),
+    payload: NewsLetterContentRequest,
     attachments: list[UploadFile] = File(default=[]),
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
@@ -293,7 +293,7 @@ async def upload_blog(
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     is_admin(token_data)
-    db_blog = BlogDb.model_validate({**request.model_dump(exclude={"categories"}), "categories": []})
+    db_blog = BlogDb.model_validate(request.model_dump(exclude={"categories"}))
     db_categories = [
         CategoryDb.model_validate(category.model_dump())
         for category in request.categories
@@ -308,7 +308,7 @@ async def update_blog(
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     is_admin(token_data)
-    db_blog = BlogDb.model_validate({**request.model_dump(exclude={"categories"}), "categories": []})
+    db_blog = BlogDb.model_validate(request.model_dump(exclude={"categories"}))
     db_categories = [
         CategoryDb.model_validate(category.model_dump())
         for category in request.categories
@@ -452,13 +452,13 @@ async def delete_country(
     return ApiResponse(message="Country deleted successfully.")
 
 
-@router.get("/quotes", response_model=QuoteListResponse)
+@router.get("/quotes", response_model=QuotePreviewListResponse)
 async def get_all_quotes(
     token_data: dict = Depends(verify_token),
     search: Optional[str] = "",
     page: int = Query(1, ge=1),
     per_page: int = Query(10, ge=1, le=100)
-) -> QuoteListResponse:
+) -> QuotePreviewListResponse:
     quotes, total = quotes_service.list_quotes(
         search=search, page=page, per_page=per_page
     )
@@ -472,7 +472,7 @@ async def get_all_quotes(
         )
         for q in quotes
     ]
-    return QuoteListResponse(
+    return QuotePreviewListResponse(
         page=page, per_page=per_page, total=total, quote_previews=quote_previews
     )
 
@@ -588,13 +588,13 @@ async def get_admin_logs(log_type: str,
             raise HTTPException(status_code=404, detail=f"Log file for {date} not found.") from exc
 
 
-@router.get("/approvals", response_model=ApprovalResponse)
+@router.get("/approvals", response_model=ApprovalPreviewListResponse)
 async def get_all_approvals(
     approval: ApprovalRequest,
     token_data: dict = Depends(verify_token),
     page: int = Query(1, ge=1),
     per_page: int = Query(10, ge=1, le=100)
-) -> ApprovalResponse:
+) -> ApprovalPreviewListResponse:
     user_role = get_user_role(token_data)
     requester_email = token_data.get("email") if user_role != UserRole.ADMIN else None
     return admin_approvals_service.list_approvals(

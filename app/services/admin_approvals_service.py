@@ -9,7 +9,7 @@ from app.models.api.request_models import ApprovalRequest
 from app.models.api.response_models import (
     ApiResponse,
     ApprovalPreviewDataResponse,
-    ApprovalResponse,
+    ApprovalPreviewListResponse,
 )
 from app.models.db.data_models import Approval as ApprovalDb
 from app.repositories.approval_repository import ApprovalRepository
@@ -36,7 +36,7 @@ class AdminApprovalsService:
         is_approved: bool | None,
         page: int,
         per_page: int,
-    ) -> ApprovalResponse:
+    ) -> ApprovalPreviewListResponse:
         approvals, total = self._approval_repo.get_approvals(
             approval_id=approval_id,
             approval_type=approval_type,
@@ -57,7 +57,7 @@ class AdminApprovalsService:
             )
             for a in approvals
         ]
-        return ApprovalResponse(
+        return ApprovalPreviewListResponse(
             page=page, per_page=per_page, total=total, approvals=approvals_dto
         )
 

@@ -47,10 +47,13 @@ class Settings(BaseSettings):
     aws_s3_blob_bucket: Optional[str] = None
     aws_s3_log_bucket: Optional[str] = None
 
-    # Supabase configuration (used for auth and semantic search)
-    supabase_url: str = ""
-    supabase_key: str = ""
-    supabase_jwt_audience: Optional[str] = None
+    # Semantic search (OPENAI_API_KEY is used for embeddings)
+    openai_api_key: Optional[str] = None
+
+    # Supabase configuration (required for DB-backed repositories + auth)
+    supabase_url: str
+    supabase_key: str
+    supabase_jwt_audience: Optional[str] = "authenticated"
 
     # Timezone configuration
     timezone: str = "Asia/Singapore"

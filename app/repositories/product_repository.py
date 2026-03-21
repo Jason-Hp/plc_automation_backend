@@ -9,29 +9,15 @@ from app.utils.supabase_client_util import get_supabase_client
 
 class ProductRepository:
     """
-    Placeholder repository. Replace with SQL queries against products/product_countries.
+    Repository for products.
     """
 
     def __init__(self) -> None:
-        self._products = [
-            Product(
-                id=1,
-                name="SIMATIC S7-1500 CPU",
-                part_number="CPU-1510",
-                manufacturer=Manufacturer(id=1, name="Siemens"),
-                image_url=None,
-                description="Sample PLC CPU for wiring cabinets.",
-            )
-        ]
         self._client = get_supabase_client()
+        if self._client is None:
+            raise RuntimeError("Supabase client is not configured.")
 
     def get_product_by_id(self, product_id: int) -> Product | None:
-        if self._client is None:
-            for item in self._products:
-                if item.id == product_id:
-                    return item
-            return None
-
         response = (
             self._client.table("products")
             .select("id,name,part_number,manufacturer_id,image_url,description")
@@ -69,14 +55,6 @@ class ProductRepository:
         )
     
     def add_product(self, product: Product) -> None:
-        if self._client is None:
-            # Assign an in-memory id if the caller didn't provide one.
-            if product.id is None:
-                next_id = (max((p.id or 0) for p in self._products) + 1) if self._products else 1
-                product.id = next_id
-            self._products.append(product)
-            return
-
         row = product.model_dump(exclude={"id", "manufacturer"})
         row["manufacturer_id"] = product.manufacturer.id
         insert_resp = self._client.table("products").insert(row).execute()
@@ -85,15 +63,6 @@ class ProductRepository:
             product.id = inserted[0]["id"]
 
     def update_product(self, product: Product) -> None:
-        if self._client is None:
-            if product.id is None:
-                return
-            for idx, item in enumerate(self._products):
-                if item.id == product.id:
-                    self._products[idx] = product
-                    return
-            return
-
         if product.id is None:
             return
 
@@ -102,10 +71,6 @@ class ProductRepository:
         self._client.table("products").update(row).eq("id", product.id).execute()
             
     def delete_product(self, product_id: int) -> None:
-        if self._client is None:
-            self._products = [item for item in self._products if item.id != product_id]
-            return
-
         self._client.table("products").delete().eq("id", product_id).execute()
 
     def list_products(
@@ -114,16 +79,6 @@ class ProductRepository:
         per_page: int,
         search: Optional[str],
     ) -> tuple[list[Product], int]:
-        if self._client is None:
-            filtered: List[Product] = self._products
-            if search:
-                filtered = [item for item in filtered if search.lower() in item.part_number.lower()]
-            total = len(filtered)
-            start = (page - 1) * per_page
-            end = start + per_page
-            filtered = filtered[start:end]
-            return filtered, total
-
         query = (
             self._client.table("products")
             .select("id,name,part_number,manufacturer_id,image_url,description")

@@ -8,18 +8,15 @@ from app.utils.supabase_client_util import get_supabase_client
 
 class JobRepository:
     """
-    In-memory mock repository for jobs.
-    Replace with real database access when implementing persistence.
+    Repository for jobs.
     """
 
     def __init__(self) -> None:
-        self._jobs: List[Job] = []
         self._client = get_supabase_client()
+        if self._client is None:
+            raise RuntimeError("Supabase client is not configured.")
 
     def get_all_jobs(self) -> list[Job]:
-        if self._client is None:
-            return self._jobs
-
         response = (
             self._client.table("jobs")
             .select("*")
@@ -29,12 +26,6 @@ class JobRepository:
         return [Job.model_validate(r) for r in response.data or []]
 
     def get_job_by_id(self, job_id: int) -> Optional[Job]:
-        if self._client is None:
-            for job in self._jobs:
-                if job.id == job_id:
-                    return job
-            return None
-
         response = (
             self._client.table("jobs")
             .select("*")
@@ -47,15 +38,8 @@ class JobRepository:
 
     def add_job(self, job: Job) -> Job:
         """
-        Add a new job. If no id is provided, assign a simple incremental id.
+        Add a new job.
         """
-        if self._client is None:
-            if job.id is None:
-                next_id = (max((j.id or 0) for j in self._jobs) + 1) if self._jobs else 1
-                job.id = next_id
-            self._jobs.append(job)
-            return job
-
         row = job.model_dump(exclude={"id"})
         insert_resp = self._client.table("jobs").insert(row).execute()
         inserted = (insert_resp.data or [])[:1]
@@ -64,18 +48,7 @@ class JobRepository:
         return job
 
     def update_job(self, job_id: int, job: Job) -> None:
-        if self._client is None:
-            for index, current in enumerate(self._jobs):
-                if current.id == job_id:
-                    self._jobs[index] = job
-                    return
-            return
-
         self._client.table("jobs").update(job.model_dump(exclude={"id"})).eq("id", job_id).execute()
 
     def delete_job(self, job_id: int) -> None:
-        if self._client is None:
-            self._jobs = [job for job in self._jobs if job.id != job_id]
-            return
-
         self._client.table("jobs").delete().eq("id", job_id).execute()

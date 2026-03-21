@@ -1,13 +1,10 @@
 from __future__ import annotations
 
-import json
-
 from fastapi import HTTPException, UploadFile
-from pydantic import ValidationError
 
 from app.config import settings
 from app.models.api.request_models import JobApplicationRequest
-from app.models.api.response_models import ApiResponse, JobPreviewResponse, JobResponse
+from app.models.api.response_models import ApiResponse, JobPreviewResponse, JobResponse, JobPreviewListResponse
 from app.repositories.job_repository import JobRepository
 from app.services.email_service import EmailService
 from app.utils.formatter_util import format_form
@@ -29,9 +26,14 @@ class PublicJobsService:
             error_message = translate_text(f"{field_name} must contain only digits")
             raise HTTPException(status_code=400, detail=error_message)
 
-    def list_job_postings(self) -> list[JobPreviewResponse]:
+    def list_job_postings(self, page: int = 1, per_page: int = 10) -> JobPreviewListResponse:
         jobs = self._job_repo.get_all_jobs()
-        return [
+        total = len(jobs)
+        start = (page - 1) * per_page
+        end = start + per_page
+        sliced_jobs = jobs[start:end]
+        
+        previews = [
             JobPreviewResponse(
                 id=job.id,
                 title=job.title,
@@ -40,8 +42,14 @@ class PublicJobsService:
                 job_type=job.job_type,
                 posted_date=job.posted_date,
             )
-            for job in jobs
+            for job in sliced_jobs
         ]
+        return JobPreviewListResponse(
+            page=page,
+            per_page=per_page,
+            total=total,
+            jobs=previews
+        )
 
     def get_job_posting(self, *, job_id: int) -> JobResponse:
         job = self._job_repo.get_job_by_id(job_id)
@@ -58,17 +66,10 @@ class PublicJobsService:
         self,
         *,
         job_id: int,
-        payload: str,
+        payload: JobApplicationRequest,
         resume: UploadFile,
     ) -> ApiResponse:
-        try:
-            parsed_payload = JobApplicationRequest.model_validate_json(payload)
-        except ValidationError as exc:
-            raise HTTPException(
-                status_code=422, detail=json.loads(exc.json())
-            ) from exc
-
-        self._ensure_digits(parsed_payload.phone, "phone number")
+        self._ensure_digits(payload.phone, "phone number")
 
         job = self._job_repo.get_job_by_id(job_id)
         if not job:
@@ -79,7 +80,7 @@ class PublicJobsService:
         self._email_service.send(
             subject=f"Apply for [{job.title}]",
             body="",
-            html_body=format_form(parsed_payload),
+            html_body=format_form(payload),
             to_addrs=[settings.hr_email],
             attachments=[
                 (

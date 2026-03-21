@@ -51,7 +51,6 @@ class ContactInfo(BaseModel):
 class Blog(BaseModel):
     id: Optional[int] = None
     title: str
-    categories: list[Category]
     image_url: str
     published_by: str
 

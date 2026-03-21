@@ -2,8 +2,7 @@ from __future__ import annotations
 
 import json
 
-from fastapi import HTTPException, UploadFile
-from pydantic import ValidationError
+from fastapi import UploadFile
 
 from app.models.api.request_models import NewsLetterContentRequest
 from app.models.api.response_models import ApiResponse
@@ -28,17 +27,10 @@ class AdminNewsletterService:
     async def broadcast_newsletter(
         self,
         *,
-        payload: str,
+        payload: NewsLetterContentRequest,
         attachments: list[UploadFile],
         actor_email: str,
     ) -> ApiResponse:
-        try:
-            parsed_payload = NewsLetterContentRequest.model_validate_json(payload)
-        except ValidationError as exc:
-            raise HTTPException(
-                status_code=422, detail=json.loads(exc.json())
-            ) from exc
-
         subscribers = self._newsletter_repo.get_all_subscribers()
         cc_addrs = list(subscribers)
 
@@ -56,9 +48,9 @@ class AdminNewsletterService:
                 )
 
         self._email_service.send(
-            subject=parsed_payload.subject,
+            subject=payload.subject,
             body="",
-            html_body=parsed_payload.content,
+            html_body=payload.content,
             to_addrs=cc_addrs,
             cc_addrs=None,
             attachments=email_attachments,
@@ -69,7 +61,7 @@ class AdminNewsletterService:
                 {
                     "event": "ADMIN_NEWSLETTER_BROADCASTED",
                     "actor": actor_email,
-                    "subject": parsed_payload.subject,
+                    "subject": payload.subject,
                     "recipients": len(cc_addrs),
                     "attachments": len(email_attachments) if email_attachments else 0,
                 }

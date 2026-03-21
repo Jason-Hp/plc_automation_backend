@@ -187,12 +187,6 @@ class QuotePreviewListResponse(BaseModel):
     quote_previews: List[QuotePreviewResponse] = []
 
 
-class QuoteListResponse(QuotePreviewListResponse):
-    """
-    Compatibility alias for endpoints that expect `QuoteListResponse`.
-    """
-
-
 class QuoteWithProductPreviewsWithQuantityResponse(BaseModel):
     quote_with_product_previews_with_quantity: QuoteWithProductPreviewsWithQuantityDataResponse
 
@@ -202,12 +196,6 @@ class ApprovalPreviewListResponse(BaseModel):
     per_page: int
     total: int
     approvals: List[ApprovalPreviewDataResponse] = []
-
-
-class ApprovalResponse(ApprovalPreviewListResponse):
-    """
-    Compatibility alias for endpoints that expect `ApprovalResponse`.
-    """
 
 
 class BlogPreviewListResponse(BaseModel):
