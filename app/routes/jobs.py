@@ -4,7 +4,6 @@ from app.dependencies import public_jobs_service
 from app.models.api.request_models import JobApplicationRequest
 from app.models.api.response_models import (
     ApiResponse,
-    JobPreviewResponse,
     JobResponse,
     JobPreviewListResponse,
 )

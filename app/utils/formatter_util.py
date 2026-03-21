@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict, List
+from typing import Any, Dict
 from pydantic import BaseModel
 from app.services.log_service import LogService
 
@@ -64,7 +64,7 @@ def format_form(payload: Any, title: str = "Form Submission") -> str:
             ".form-container { background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 10px 0; }",
             ".form-title { font-size: 24px; margin-bottom: 15px; color: #333; }",
             "</style>",
-            f"<div class='form-container'>",
+            "<div class='form-container'>",
             f"<h2 class='form-title'>{title}</h2>",
         ]
         

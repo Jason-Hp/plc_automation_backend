@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from typing import Dict, List
 
 from app.models.db.data_models import Category
 from app.utils.supabase_client_util import get_supabase_client

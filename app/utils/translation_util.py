@@ -1,5 +1,4 @@
 from app.utils.context_util import lang_context
-from app.services.alert_service import AlertService
 from app.services.log_service import LogService
 
 try:

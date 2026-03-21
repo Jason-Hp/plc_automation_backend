@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from typing import Set, Tuple
 
 from app.models.db.data_models import Country
 from app.utils.supabase_client_util import get_supabase_client

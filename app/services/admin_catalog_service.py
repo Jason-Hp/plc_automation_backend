@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from typing import Optional
 
 from app.models.db.data_models import Category, ContactInfo, Country, Manufacturer
 from app.repositories.category_repository import CategoryRepository
