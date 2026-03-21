@@ -39,7 +39,7 @@ Base URL: `http://localhost:8000/api`
     "phone": "+65 1234 5678",
     "email": "contact@plc-automation.com",
     "working_hours": "Mon-Fri: 9am-6pm",
-    "country": "Singapore"
+    "country": "SG"
   }
 ]
 ```
@@ -53,7 +53,7 @@ Base URL: `http://localhost:8000/api`
   "phone": "+65 1234 5678",
   "email": "contact@plc-automation.com",
   "working_hours": "Mon-Fri: 9am-6pm",
-  "country": "Singapore"
+  "country": "SG"
 }
 ```
 
@@ -79,8 +79,8 @@ Base URL: `http://localhost:8000/api`
 **Response 200**
 ```json
 [
-  { "id": 1, "name": "Singapore", "code": "SG" },
-  { "id": 2, "name": "Malaysia", "code": "MY" }
+  { "id": 1, "name": "SG", "code": "+65" },
+  { "id": 2, "name": "MY", "code": "+66" }
 ]
 ```
 
@@ -353,7 +353,7 @@ Base URL: `http://localhost:8000/api`
   "manufacturer": "Siemens",
   "image_url": "https://example.com/product.jpg",
   "description": "High performance PLC module for large scale systems.",
-  "countries": ["Singapore", "Malaysia"]
+  "countries": ["SG", "MY"]
 }
 ```
 
