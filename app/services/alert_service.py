@@ -16,9 +16,8 @@ class AlertService(Enum):
         subject = f"{self.alert_type} Alert Notification - {subject}"
         to_addrs = [settings.admin_email]
         self.email_svc.send(
-            subject,
-            message,
-            self.email_svc.smtp_from,
-            to_addrs,
+            subject=subject,
+            body=message,
+            to_addrs=to_addrs,
         )
     

@@ -58,7 +58,10 @@ class AdminApprovalsService:
             for a in approvals
         ]
         return ApprovalPreviewListResponse(
-            page=page, per_page=per_page, total=total, approvals=approvals_dto
+            page=page, 
+            per_page=per_page, 
+            total=total, 
+            approvals=approvals_dto
         )
 
     async def add_approval(

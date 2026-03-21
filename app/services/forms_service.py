@@ -101,11 +101,13 @@ class FormsService:
             subject=f"Subscribe by {payload.email}",
             html_body=admin_html,
             to_addrs=[settings.admin_email],
+            body=""
         )
         self._email_service.send(
             subject="Thanks for subscribing",
             html_body=user_html,
             to_addrs=[payload.email],
+            body=""
         )
 
         return ApiResponse(message=translate_text("Thank you for subscribing."))

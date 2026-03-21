@@ -48,6 +48,7 @@ from app.models.api.request_models import (
     FAQRequest,
     JobUploadRequest,
     ManufacturerRequest,
+    NewsLetterContentRequest,
     ProductWithCountriesRequest,
     QuoteWithProductPreviewsWithQuantityRequest,
 )
@@ -264,7 +265,7 @@ async def upload_contact_info(
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     is_admin(token_data)
-    admin_catalog_service.upload_contact_info(contact_info)
+    admin_catalog_service.add_contact_info(ContactInfoDb.model_validate(contact_info.model_dump()))
     return ApiResponse(message="Contact info uploaded successfully.")
 
 @router.put("/contact-info/{contact_id}", response_model=ApiResponse)
@@ -275,7 +276,7 @@ async def update_contact_info(
 ) -> ApiResponse:
     is_admin(token_data)
     admin_catalog_service.update_contact_info(
-        contact_id=contact_id, contact_info=contact_info
+        contact_id=contact_id, contact_info=ContactInfoDb.model_validate(contact_info.model_dump())
     )
     return ApiResponse(message="Contact info updated successfully.")
 
@@ -592,7 +593,9 @@ async def get_admin_logs(log_type: str,
 
 @router.get("/approvals", response_model=ApprovalPreviewListResponse)
 async def get_all_approvals(
-    approval: ApprovalRequest,
+    approval_id: Optional[int] = Query(None, ge=1),
+    approval_type: Optional[str] = Query(None),
+    is_approved: Optional[bool] = Query(None),
     token_data: dict = Depends(verify_token),
     page: int = Query(1, ge=1),
     per_page: int = Query(10, ge=1, le=100)
@@ -601,9 +604,9 @@ async def get_all_approvals(
     requester_email = token_data.get("email") if user_role != UserRole.ADMIN else None
     return admin_approvals_service.list_approvals(
         requester_email=requester_email,
-        approval_id=approval.id,
-        approval_type=approval.type,
-        is_approved=approval.is_approved,
+        approval_id=approval_id,
+        approval_type=approval_type,
+        is_approved=is_approved,
         page=page,
         per_page=per_page,
     )

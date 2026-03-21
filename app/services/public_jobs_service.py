@@ -48,7 +48,7 @@ class PublicJobsService:
             page=page,
             per_page=per_page,
             total=total,
-            jobs=previews
+            job_previews=previews
         )
 
     def get_job_posting(self, *, job_id: int) -> JobResponse:
