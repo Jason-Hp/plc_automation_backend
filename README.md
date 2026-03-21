@@ -8,7 +8,7 @@ All endpoints below are under `/api`.
 
 - `lang`: optional, default `en`
 - `country`: optional, default `SG`
-- `Authorization`: required for all `/api/admin/*` endpoints **except** `/api/admin/login`
+- `Authorization`: required for all `/api/admin/*` endpoints 
 
 ---
 
@@ -540,7 +540,7 @@ Environment variables are loaded from `.env` via `app/config.py`.
   "page": 1,
   "per_page": 10,
   "total": 1,
-  "jobs": [
+  "job_previews": [
     {
       "id": 1,
       "title": "PLC Engineer",
@@ -625,35 +625,6 @@ Environment variables are loaded from `.env` via `app/config.py`.
 >
 > `Authorization: Bearer <token>`
 
-### POST `/api/admin/login`
-**Headers**
-```json
-{
-  "lang": "en (optional)",
-  "country": "SG (optional)"
-}
-```
-
-**Request body (application/json)**
-```json
-{
-  "username": "admin",
-  "password": "password"
-}
-```
-
-**Response 200**
-```json
-"<jwt_token>"
-```
-
-**Response 401**
-```json
-{
-  "detail": "Invalid credentials"
-}
-```
-
 ### GET `/api/admin/user-info`
 **Headers**
 ```json
@@ -699,7 +670,7 @@ Environment variables are loaded from `.env` via `app/config.py`.
 }
 ```
 
-### POST `/api/admin/products/batch`
+### POST `/api/admin/products/batch` (THIS ENDPOINT IS NOT WOKRING, DO NOT USE)
 **Headers**
 ```json
 {
@@ -740,10 +711,7 @@ Environment variables are loaded from `.env` via `app/config.py`.
   "id": 2,
   "name": "Relay Module",
   "part_number": "RM-100",
-  "manufacturer": {
-    "id": 2,
-    "name": "BrandX"
-  },
+  "manufacturer": "Siemen",
   "image_url": "https://cdn.example.com/products/relay-module.jpg",
   "stock": true,
   "description": "Industrial relay"
@@ -776,10 +744,7 @@ Environment variables are loaded from `.env` via `app/config.py`.
   "id": 2,
   "name": "Relay Module",
   "part_number": "RM-100",
-  "manufacturer": {
-    "id": 2,
-    "name": "BrandX"
-  },
+  "manufacturer": "Siemen",
   "image_url": "https://cdn.example.com/products/relay-module.jpg",
   "stock": true,
   "description": "Industrial relay"

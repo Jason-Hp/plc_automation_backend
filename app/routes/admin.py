@@ -153,6 +153,7 @@ async def create_account(accountCreationRequest: AccountCreationRequest, token_d
 
 # TODO: refactor
 # This is a batch upload and/or update using CSV
+# WARNING THIS ENDPOINT IS NOT COMPLETED AND IS NOT TO BE USED
 @router.post("/products/batch", response_model=BatchProductUploadResultResponse)
 async def upload_offer_products(
     csv_file: UploadFile = File(...),
@@ -549,6 +550,7 @@ async def delete_quote(
     return ApiResponse(message="Quote deleted successfully.")
 
 # This is a download
+# log_type can be web, error, admin, debug
 @router.get("/log/{log_type}")
 async def get_admin_logs(log_type: str, 
                          date: str = Query(None, description="Date in YYYY-MM-DD format. If not provided, defaults to today's logs."), 

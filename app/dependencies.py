@@ -10,6 +10,7 @@ from app.repositories.maufacturer_repository import ManufacturerRepository
 from app.repositories.quote_repository import QuoteRepository
 from app.repositories.newsletter_subscribers_repository import NewsletterRepository
 from app.repositories.product_repository import ProductRepository
+from app.repositories.product_country_repository import ProductCountryRepository
 from app.repositories.quote_product_repository import QuoteProductRepository
 from app.services.email_service import EmailService
 from app.services.jwt_service import JwtService
@@ -37,6 +38,7 @@ contact_info_repo = ContactInfoRepository()
 blog_repo = BlogRepository()
 blog_category_repo = BlogCategoryRepository()
 product_repo = ProductRepository()
+product_country_repo = ProductCountryRepository()
 job_repo = JobRepository()
 category_repo = CategoryRepository()
 manufacturer_repo = ManufacturerRepository()
@@ -70,7 +72,7 @@ admin_catalog_service = AdminCatalogService(
 admin_products_service = AdminProductsService(
     manufacturer_repo=manufacturer_repo,
     product_repo=product_repo,
-    country_repo=country_repo,
+    product_country_repo=product_country_repo,
 )
 
 admin_newsletter_service = AdminNewsletterService(
@@ -97,7 +99,9 @@ public_infos_service = PublicInfosService(
 )
 
 public_products_service = PublicProductsService(
-    product_repo=product_repo, country_repo=country_repo
+    product_repo=product_repo,
+    country_repo=country_repo,
+    product_country_repo=product_country_repo,
 )
 
 public_blogs_service = PublicBlogsService(

@@ -209,7 +209,7 @@ class JobPreviewListResponse(BaseModel):
     page: int
     per_page: int
     total: int
-    jobs: List[JobPreviewResponse] = []
+    job_previews: List[JobPreviewResponse] = []
     posted_date: str  # DD - MM - YYYY
 
 

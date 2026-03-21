@@ -11,6 +11,7 @@ from app.models.api.response_models import (
     ProductWithStockResponse,
 )
 from app.repositories.country_repository import CountryRepository
+from app.repositories.product_country_repository import ProductCountryRepository
 from app.repositories.product_repository import ProductRepository
 from app.utils.translation_util import translate_text
 
@@ -21,9 +22,11 @@ class PublicProductsService:
         *,
         product_repo: ProductRepository,
         country_repo: CountryRepository,
+        product_country_repo: ProductCountryRepository,
     ) -> None:
         self._product_repo = product_repo
         self._country_repo = country_repo
+        self._product_country_repo = product_country_repo
 
     def list_product_previews(
         self, *, page: int, per_page: int, search: str | None
@@ -59,7 +62,7 @@ class PublicProductsService:
         country = self._country_repo.get_country_by_name(country_name)
         stock = False
         if country and country.id is not None and product.id is not None:
-            stock = self._country_repo.get_product_availability_by_country(
+            stock = self._product_country_repo.get_product_availability_by_country(
                 country.id, product.id
             )
 
