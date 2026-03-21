@@ -424,15 +424,8 @@ Same schema as POST `/admin/products`.
 }
 ```
 
-### GET `/admin/approvals?page={page}&per_page={per_page}`
-**Request body** (used for filtering)
-```json
-{
-  "id": 1,
-  "type": "Quote",
-  "is_approved": false
-}
-```
+### GET `/admin/approvals?approval_id={[Optional]approval_id}&approval_type={[Optional]approval_type}&is_approved={[Optional]is_approved}&page={page}&per_page={per_page}`
+
 **Response 200**
 ```json
 {

@@ -40,7 +40,7 @@ class PublicInfosService:
         return [
             FAQResponse.model_validate(
                 {
-                    **faq.model_dump(),
+                    "id": faq.id,
                     "question": translate_text(faq.question),
                     "answer": translate_text(faq.answer),
                 }
