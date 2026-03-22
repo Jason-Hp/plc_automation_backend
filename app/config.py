@@ -28,11 +28,6 @@ class Settings(BaseSettings):
     quote_and_enquiry_email: str = ""
     hr_email: str = "hr@plcautomat.com"
 
-    # Admin is the only approver (REFACTOR ACCOUNTS TO BE STORED IN DB INSTEAD)
-    # This value should align with the Supabase user identifier (e.g. email or user id)
-    admin_username: str = "admin"
-
-    upload_dir: str = str(UPLOAD_DIR)
     database_url: str = ""
     web_log_location: str = str(LOG_DIR / "web_logs")
     error_log_location: str = str(LOG_DIR / "error_logs")
