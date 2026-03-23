@@ -1,7 +1,6 @@
 from app.models.domain.domain_models import ProductPreview
 from app.models.db.data_models import Manufacturer
 from openai import OpenAI
-import tiktoken
 from supabase import Client
 
 from app.utils.supabase_client_util import get_supabase_client
@@ -20,7 +19,8 @@ class SearchService:
             self.client = OpenAI(api_key=settings.openai_api_key)
         
         self.embedding_model = "text-embedding-3-small"
-        self.tokenizer = tiktoken.get_encoding("cl100k_base")
+        # self.tokenizer = tiktoken.get_encoding("cl100k_base")
+        self.tokenizer = None
         self.supabase: Client | None = get_supabase_client()
 
     def _get_embedding(self, text: list[str]) -> list[float]:

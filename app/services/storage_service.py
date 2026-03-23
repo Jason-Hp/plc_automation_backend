@@ -27,12 +27,9 @@ class StorageService:
                 region_name=settings.aws_region,
             )
         else:
-            #raise NotImplementedError("Please configure AWS S3 credentials and bucket to enable storage.")
-            pass
+            raise NotImplementedError("Please configure AWS S3 credentials and bucket to enable storage.")
 
     def get_object_url(self, bucket: str, key: str) -> str:
-
-        return "mock-url"
 
         try:
             # Check if object exists first
@@ -56,8 +53,6 @@ class StorageService:
         # For private storage, mainly for logs for now
         key = original_filename or f"{uuid.uuid4()}"
 
-        return
-
         try:
             self.s3_client.put_object(Bucket=bucket, Key=key, Body=payload)
         except (BotoCoreError, ClientError) as exc:
@@ -73,8 +68,6 @@ class StorageService:
 
         key = f"{uuid.uuid4()}-{original_filename or 'DEFAULT'}"
 
-        return
-
         try:
             self.s3_client.put_object(Bucket=bucket, Key=key, Body=payload)
         except (BotoCoreError, ClientError) as exc:
@@ -84,6 +77,6 @@ class StorageService:
         if self.cloudfront_domain:
             return f"https://{self.cloudfront_domain}/{key}"
         else:
-            region = settings.aws_region or "us-east-1"
+            region = settings.aws_region or "ap-southeast-1"
             return f"https://{bucket}.s3.{region}.amazonaws.com/{key}"
 
