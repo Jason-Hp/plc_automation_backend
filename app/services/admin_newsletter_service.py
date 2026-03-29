@@ -31,7 +31,7 @@ class AdminNewsletterService:
         actor_email: str,
     ) -> ApiResponse:
         subscribers = self._newsletter_repo.get_all_subscribers()
-        cc_addrs = list(subscribers)
+        bcc_addrs = list(subscribers)
 
         email_attachments = None
         if attachments:
@@ -50,8 +50,9 @@ class AdminNewsletterService:
             subject=payload.subject,
             body="",
             html_body=payload.content,
-            to_addrs=cc_addrs,
+            to_addrs=None,
             cc_addrs=None,
+            bcc_addrs=bcc_addrs,
             attachments=email_attachments,
         )
 
@@ -61,7 +62,7 @@ class AdminNewsletterService:
                     "event": "ADMIN_NEWSLETTER_BROADCASTED",
                     "actor": actor_email,
                     "subject": payload.subject,
-                    "recipients": len(cc_addrs),
+                    "recipients": len(bcc_addrs),
                     "attachments": len(email_attachments) if email_attachments else 0,
                 }
             )

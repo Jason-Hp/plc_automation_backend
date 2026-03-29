@@ -39,6 +39,7 @@ class AdminProductsService:
         )
         self._product_repo.add_product(product)
         if product.id:
+            print(f"Added product with ID: {product.id}")
             self._product_country_repo.add_product_availability_for_countries(
                 request.countries, product.id
             )

@@ -30,7 +30,7 @@ class NewsletterRepository:
         return bool(response.data)
 
     def subscribe(self, email: str) -> None:
-        subscribed_date = datetime.now(pytz.timezone(settings.timezone)).isoformat()
+        subscribed_date = datetime.now(pytz.timezone(settings.timezone)).strftime("%Y-%m-%d")
         self._client.table("newsletter_subscribers").upsert(
             {"email": email.lower(), "subscribed_date": subscribed_date},
             on_conflict="email",

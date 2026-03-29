@@ -18,6 +18,6 @@ class AlertService(Enum):
         self.email_svc.send(
             subject=subject,
             body=message,
-            to_addrs=to_addrs,
+            to_addrs=to_addrs
         )
     

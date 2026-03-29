@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Optional
 
+from jmespath import search
+
 from app.models.db.data_models import Manufacturer, Product
 from app.utils.supabase_client_util import get_supabase_client
 
@@ -83,8 +85,10 @@ class ProductRepository:
             self._client.table("products")
             .select("id,name,part_number,manufacturer_id,image_url,description")
         )
+
+        # Match search term against both part number and name using OR condition
         if search:
-            query = query.ilike("part_number", f"%{search}%")
+            query = query.or_(f"part_number.ilike.%{search}%,name.ilike.%{search}%")
 
         total_resp = query.execute()
         total = len(total_resp.data or [])

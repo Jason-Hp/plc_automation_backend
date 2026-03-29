@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from fastapi import HTTPException, UploadFile
+import datetime
+import pytz
 
 from app.config import settings
 from app.models.api.request_models import (
@@ -14,6 +16,7 @@ from app.repositories.newsletter_subscribers_repository import (
 )
 from app.services.email_service import EmailService
 from app.services.quotes_service import QuotesService
+from app.services.log_service import LogService
 from app.utils.formatter_util import format_form
 from app.utils.translation_util import translate_text
 
@@ -37,6 +40,8 @@ class FormsService:
 
     async def submit_enquiry(self, *, payload: EnquiryRequest) -> ApiResponse:
         self._ensure_digits(payload.phone, "phone number")
+        if payload.created_at == None:
+            payload.created_at = datetime.datetime.now(pytz.timezone(settings.timezone)).strftime("%Y-%m-%d %H:%M:%S")
         self._email_service.send(
             subject=f"Contact Us by {payload.name}",
             body="",
@@ -109,6 +114,8 @@ class FormsService:
             to_addrs=[payload.email],
             body=""
         )
+
+        LogService.ADMIN.log(f"{payload.email} subscribed to newsletter")
 
         return ApiResponse(message=translate_text("Thank you for subscribing."))
 

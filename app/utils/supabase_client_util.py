@@ -10,7 +10,7 @@ from app.config import settings
 @lru_cache(maxsize=1)
 def get_supabase_client():
     """
-    Get a cached Supabase client.
+    Method to get supabase client and cache it for different services
     """
     return create_client(settings.supabase_url, settings.supabase_key)
 

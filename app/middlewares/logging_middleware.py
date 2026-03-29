@@ -24,11 +24,19 @@ class LoggingMiddleware(BaseHTTPMiddleware):
         }
         
         if request_body:
+            content_type = request.headers.get("content-type", "")
             try:
-                parsed = json.loads(request_body.decode())
-                log_entry["body"] = self._redact_payload(parsed)
+                if "multipart/form-data" in content_type:
+                    form = await request.form()
+                    log_entry["body"] = {
+                        key: (f"<file: {val.filename}>" if hasattr(val, "filename") else val)
+                        for key, val in form.items()
+                    }
+                else:
+                    parsed = json.loads(request_body.decode())
+                    log_entry["body"] = self._redact_payload(parsed)
             except Exception:
-                log_entry["body"] = request_body.decode()[:100]  # First 100 chars
+                log_entry["body"] = request_body.decode("utf-8", errors="replace")[:100]
         
         LogService.WEB.log(json.dumps(log_entry))
         

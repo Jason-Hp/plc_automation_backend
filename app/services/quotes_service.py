@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 from typing import List, Tuple
+from datetime import datetime
+import pytz
 
+from app.config import settings
 from app.models.api.request_models import QuoteWithProductPreviewsWithQuantityRequest
 from app.models.db.data_models import Quote
 from app.models.domain.domain_models import QuoteWithProductPreviewsWithQuantity
@@ -39,8 +42,8 @@ class QuotesService:
 
     def create_quote(self, request: QuoteWithProductPreviewsWithQuantityRequest) -> int:
         domain_quote = QuoteWithProductPreviewsWithQuantity.from_request(request)
-        db_quote = Quote.model_validate(domain_quote)
-
+        db_quote = Quote.model_validate(domain_quote.model_dump())
+        db_quote.created_at = datetime.now(pytz.timezone(settings.timezone)).strftime("%Y-%m-%d %H:%M:%S")
         quote_id = self._quote_repo.add_quote(db_quote)
         self._quote_product_repo.add_products_to_quote_with_quantity(
             quote_id, domain_quote.product_previews_with_quantity
@@ -49,7 +52,7 @@ class QuotesService:
 
     def update_quote(self, quote_id: int, request: QuoteWithProductPreviewsWithQuantityRequest) -> None:
         domain_quote = QuoteWithProductPreviewsWithQuantity.from_request(request)
-        db_quote = Quote.model_validate(domain_quote)
+        db_quote = Quote.model_validate(domain_quote.model_dump())
         db_quote.id = quote_id
 
         self._quote_repo.update_quote(db_quote)

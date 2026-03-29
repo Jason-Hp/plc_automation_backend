@@ -11,7 +11,7 @@ async def semantic_search(
 ) -> ProductPreviewListResponse:
     results = search_service.semantic_search(query=query, top_k=top_k)
     return ProductPreviewListResponse(
-        product_previews=[ProductPreviewResponse.model_validate(r) for r in results],
+        product_previews=[ProductPreviewResponse.model_validate(r.model_dump()) for r in results],
         page=1,
         per_page=top_k,
         total=len(results),

@@ -362,6 +362,50 @@ Same schema as POST `/admin/products`.
 
 ### DELETE `/admin/products/{product_id}`
 
+### POST `/admin/products/batch`
+**Content-Type**: `multipart/form-data`
+**Request body**
+- `csv_file`: (required file)
+
+### POST `/admin/faqs`
+**Request body**
+```json
+[
+  {
+    "question": "New FAQ Question?",
+    "answer": "New FAQ Answer."
+  }
+]
+```
+
+### PUT `/admin/faqs/{faq_id}`
+**Request body**
+```json
+{
+  "question": "Updated Question?",
+  "answer": "Updated Answer."
+}
+```
+
+### DELETE `/admin/faqs/{faq_id}`
+
+### POST `/admin/contact-info`
+**Request body**
+```json
+{
+  "address": "123 New St",
+  "phone": "+65 0000 0000",
+  "email": "new@example.com",
+  "working_hours": "9am-5pm",
+  "country": "SG"
+}
+```
+
+### PUT `/admin/contact-info/{contact_id}`
+Same schema as POST `/admin/contact-info`.
+
+### DELETE `/admin/contact-info/{contact_id}`
+
 ### GET `/admin/quotes?search={search}&page={page}&per_page={per_page}`
 **Response 200**
 ```json
@@ -410,6 +454,36 @@ Same schema as POST `/admin/products`.
 }
 ```
 
+### POST `/admin/quotes`
+**Request body**
+```json
+{
+  "name": "John Doe",
+  "company_name": "Tech Corp",
+  "country_code": "SG",
+  "phone": "12345678",
+  "email": "john@example.com",
+  "message": "Quote request message",
+  "is_paid": false,
+  "total_amount": 1000,
+  "product_previews_with_quantity": [
+    {
+      "id": 1,
+      "name": "S7-1200",
+      "part_number": "6ES7214-1AG40-0XB0",
+      "manufacturer": { "id": 1, "name": "Siemens" },
+      "image_url": "https://example.com/s7-1200.jpg",
+      "quantity": 5
+    }
+  ]
+}
+```
+
+### PUT `/admin/quote/{quote_id}`
+Same schema as POST `/admin/quotes`.
+
+### DELETE `/admin/quote/{quote_id}`
+
 ### POST `/admin/blogs`
 **Request body**
 ```json
@@ -423,6 +497,75 @@ Same schema as POST `/admin/products`.
   "categories": [{ "id": 1, "name": "Guide" }]
 }
 ```
+
+### PUT `/admin/blogs/{blog_id}`
+Same schema as POST `/admin/blogs`.
+
+### DELETE `/admin/blogs/{blog_id}`
+
+### POST `/admin/jobs`
+**Request body**
+```json
+{
+  "title": "New Job",
+  "country": "SG",
+  "location": "Singapore",
+  "job_type": "Full-time",
+  "posted_date": "01-03-2025",
+  "industry": "Automation",
+  "requirements": "Requirements here...",
+  "responsibilities": "Responsibilities here...",
+  "description": "Description here...",
+  "working_hours": "9am-6pm"
+}
+```
+
+### PUT `/admin/jobs/{job_id}`
+Same schema as POST `/admin/jobs`.
+
+### DELETE `/admin/jobs/{job_id}`
+
+### POST `/admin/categories`
+**Request body**
+```json
+{ "name": "New Category" }
+```
+
+### PUT `/admin/categories/{category_id}`
+**Request body**
+```json
+{ "name": "Updated Category" }
+```
+
+### DELETE `/admin/categories/{category_id}`
+
+### POST `/admin/manufacturers`
+**Request body**
+```json
+{ "name": "New Manufacturer" }
+```
+
+### PUT `/admin/manufacturers/{manufacturer_id}`
+**Request body**
+```json
+{ "name": "Updated Manufacturer" }
+```
+
+### DELETE `/admin/manufacturers/{manufacturer_id}`
+
+### POST `/admin/countries`
+**Request body**
+```json
+{ "name": "New Country", "code": "+00" }
+```
+
+### PUT `/admin/countries/{country_id}`
+**Request body**
+```json
+{ "name": "Updated Country", "code": "+01" }
+```
+
+### DELETE `/admin/countries/{country_id}`
 
 ### GET `/admin/approvals?approval_id={[Optional]approval_id}&approval_type={[Optional]approval_type}&is_approved={[Optional]is_approved}&page={page}&per_page={per_page}`
 
@@ -461,6 +604,12 @@ Same schema as POST `/admin/products`.
   "request_date": "01-03-2025"
 }
 ```
+
+### DELETE `/admin/approvals/{approval_id}`
+
+### PUT `/admin/approvals/{approval_id}/approve`
+
+### PUT `/admin/approvals/{approval_id}/reject`
 
 ---
 

@@ -50,7 +50,7 @@ class PublicInfosService:
 
     def get_contact_infos(self) -> List[ContactInfoResponse]:
         return [
-            ContactInfoResponse.model_validate(info)
+            ContactInfoResponse.model_validate(info.model_dump())
             for info in self._contact_info_repo.get_all_contact_info()
         ]
 
@@ -58,23 +58,23 @@ class PublicInfosService:
         contact_info = self._contact_info_repo.get_contact_info_by_country(country)
         if not contact_info:
             raise HTTPException(status_code=404, detail="Contact info not found")
-        return ContactInfoResponse.model_validate(contact_info)
+        return ContactInfoResponse.model_validate(contact_info.model_dump())
 
     def get_categories(self) -> List[CategoryResponse]:
         return [
-            CategoryResponse.model_validate(c)
+            CategoryResponse.model_validate(c.model_dump())
             for c in self._category_repo.get_all_categories()
         ]
 
     def get_manufacturers(self) -> List[ManufacturerResponse]:
         return [
-            ManufacturerResponse.model_validate(m)
+            ManufacturerResponse.model_validate(m.model_dump())
             for m in self._manufacturer_repo.get_all_manufacturers()
         ]
 
     def get_countries(self) -> List[CountryResponse]:
         return [
-            CountryResponse.model_validate(c)
+            CountryResponse.model_validate(c.model_dump())
             for c in self._country_repo.get_all_countries()
         ]
 

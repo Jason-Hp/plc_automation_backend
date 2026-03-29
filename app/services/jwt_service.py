@@ -21,7 +21,7 @@ class JwtService:
         if not settings.supabase_url:
             raise RuntimeError("SUPABASE_URL is not configured")
 
-        jwks_url = f"{settings.supabase_url.rstrip('/')}/auth/v1/keys"
+        jwks_url = f"{settings.supabase_url}/auth/v1/.well-known/jwks.json"
         self._jwks_client = PyJWKClient(jwks_url)
         self._audience: Optional[str] = settings.supabase_jwt_audience or None
 

@@ -1,4 +1,5 @@
-from fastapi import APIRouter, UploadFile, File, Query
+import json
+from fastapi import APIRouter, UploadFile, File, Query, Form
 
 from app.dependencies import public_jobs_service
 from app.models.api.request_models import JobApplicationRequest
@@ -26,9 +27,10 @@ async def get_job_posting(job_id: int) -> JobResponse:
 @router.post("/{job_id}/application", response_model=ApiResponse)
 async def submit_job_application(
     job_id: int,
-    payload: JobApplicationRequest,
+    payload: str = Form(...),
     resume: UploadFile = File(...),
 ) -> ApiResponse:
+    parsed_payload = JobApplicationRequest.model_validate(json.loads(payload))
     return await public_jobs_service.submit_job_application(
-        job_id=job_id, payload=payload, resume=resume
+        job_id=job_id, payload=parsed_payload, resume=resume
     )

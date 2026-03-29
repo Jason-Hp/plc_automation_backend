@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, File, UploadFile
-
+from fastapi import APIRouter, File, Form, UploadFile
+import json
 from app.dependencies import forms_service
 from app.models.api.request_models import (
     EnquiryRequest,
@@ -20,10 +20,13 @@ async def submit_enquiry(payload: EnquiryRequest) -> ApiResponse:
 
 @router.post("/quote", response_model=ApiResponse)
 async def submit_quote(
-    payload: QuoteWithProductPreviewsWithQuantityRequest,
+    payload: str = Form(...),
     attachment: UploadFile = File(None),
 ) -> ApiResponse:
-    return await forms_service.submit_quote(payload=payload, attachment=attachment)
+
+    parsed_payload = QuoteWithProductPreviewsWithQuantityRequest.model_validate(json.loads(payload))
+    
+    return await forms_service.submit_quote(payload=parsed_payload, attachment=attachment)
 
 
 @router.post("/newsletter", response_model=ApiResponse)

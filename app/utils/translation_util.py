@@ -13,5 +13,5 @@ def translate_text(text: str) -> str:
         return GoogleTranslator(source='auto', target=lang_context.get()).translate(text)
     except Exception:
         # Expected fallback: user still sees original text instead of an error.
-        LogService.DEBUG.log(f"Translation failed; returning original text: {text}", level="WARNING")
+        LogService.DEBUG.log(f"Translation failed to {lang_context.get()}; returning original text: {text}", level="WARNING")
         return text

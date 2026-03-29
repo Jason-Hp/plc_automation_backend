@@ -8,7 +8,7 @@ import pytz
 from pathlib import Path
 from typing import Optional
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status, Query
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status, Query
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.responses import FileResponse, RedirectResponse
 
@@ -208,14 +208,15 @@ async def delete_product(
 
 @router.post("/broadcast-newsletter", response_model=ApiResponse)
 async def broadcast_newsletter(
-    payload: NewsLetterContentRequest,
+    payload: str = Form(...),
     attachments: list[UploadFile] = File(default=[]),
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     is_admin(token_data)
     actor_email = token_data.get("email")
+    parsed_payload = NewsLetterContentRequest.model_validate(json.loads(payload))
     return await admin_newsletter_service.broadcast_newsletter(
-        payload=payload,
+        payload=parsed_payload,
         attachments=attachments,
         actor_email=actor_email,
     )
@@ -603,13 +604,14 @@ async def get_all_approvals(
 
 @router.post("/approvals", response_model=ApiResponse)
 async def add_approval(
-    approval: ApprovalRequest,
+    payload: str = Form(...),
     attachment: Optional[UploadFile] = File(None),
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     email = token_data.get("email")
+    parsed_payload = ApprovalRequest.model_validate(json.loads(payload))
     return await admin_approvals_service.add_approval(
-        approval=approval,
+        approval=parsed_payload,
         attachment=attachment,
         requester_email=email,
         timezone=timezone,

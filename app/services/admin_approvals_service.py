@@ -72,7 +72,7 @@ class AdminApprovalsService:
         requester_email: str,
         timezone: datetime.tzinfo,
     ) -> ApiResponse:
-        approval_db = ApprovalDb.model_validate(approval)
+        approval_db = ApprovalDb.model_validate(approval.model_dump())
         approval_db.requester = requester_email
         approval_db.request_date = datetime.datetime.now(timezone).strftime(
             "%Y-%m-%d"

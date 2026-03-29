@@ -1,3 +1,5 @@
+from supabase_auth import AdminUserAttributes, UserAttributes
+
 from app.utils.supabase_client_util import get_supabase_client
 
 
@@ -23,12 +25,14 @@ class SupabaseService:
             Exception: If user creation fails
         """
         try:
-            response = self.client.auth.admin.create_user(
+
+            adminUserAttributes = AdminUserAttributes(
                 email=email,
                 password=password,
-                user_metadata={"email": email},  # Optional: user-visible metadata
-                app_metadata={"user_role": user_role}  # Admin-only metadata
+                app_metadata={"user_role": user_role}
             )
+
+            response = self.client.auth.admin.create_user(adminUserAttributes)
             return response
         except Exception as exc:
             raise Exception(f"Failed to create user: {str(exc)}") from exc

@@ -60,7 +60,7 @@ class PublicJobsService:
         translated.description = translate_text(translated.description)
         translated.requirements = translate_text(translated.requirements)
         translated.responsibilities = translate_text(translated.responsibilities)
-        return JobResponse.model_validate(translated)
+        return JobResponse.model_validate(translated.model_dump())
 
     async def submit_job_application(
         self,
