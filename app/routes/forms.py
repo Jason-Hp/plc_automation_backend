@@ -26,6 +26,10 @@ async def submit_quote(
 
     parsed_payload = QuoteWithProductPreviewsWithQuantityRequest.model_validate(json.loads(payload))
     
+    # Force set to false to prevent users from trying to set it to true and total amount to 0 to prevent users from trying to set it to a custom value. The actual values will be calculated in the service layer based on the products and their quantities.
+    parsed_payload.is_paid = False
+    parsed_payload.total_amount = 0
+
     return await forms_service.submit_quote(payload=parsed_payload, attachment=attachment)
 
 
