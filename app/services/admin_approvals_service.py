@@ -47,6 +47,7 @@ class AdminApprovalsService:
         )
         approval_previews = [
             ApprovalPreviewDataResponse(
+                id=a.id,
                 type=a.type,
                 payload=a.payload,
                 is_approved=a.is_approved,
@@ -112,7 +113,7 @@ class AdminApprovalsService:
 
     def approve_approval(
         self, *, approval_id: int, approver_email: str
-    ) -> ApiResponse:
+    ) -> ApprovalPreviewDataResponse:
         approval = self._approval_repo.approve_request(approval_id)
         if not approval:
             raise HTTPException(status_code=404, detail="Approval not found.")
@@ -120,11 +121,19 @@ class AdminApprovalsService:
         LogService.ADMIN.log(
             f"Approval request {approval_id} approved by {approver_email}"
         )
-        return ApiResponse(message="Approval approved successfully.")
+        return ApprovalPreviewDataResponse(
+            id=approval.id,
+            type=approval.type,
+            payload=approval.payload,
+            is_approved=approval.is_approved,
+            requester=approval.requester,
+            request_date=approval.request_date,
+            attachment_url=approval.attachment_url,
+        )
 
     def reject_approval(
         self, *, approval_id: int, rejector_email: str
-    ) -> ApiResponse:
+    ) -> ApprovalPreviewDataResponse:
         approval = self._approval_repo.reject_request(approval_id)
         if not approval:
             raise HTTPException(status_code=404, detail="Approval not found.")
@@ -132,5 +141,13 @@ class AdminApprovalsService:
         LogService.ADMIN.log(
             f"Approval request {approval_id} rejected by {rejector_email}"
         )
-        return ApiResponse(message="Approval rejected successfully.")
+        return ApprovalPreviewDataResponse(
+            id=approval.id,
+            type=approval.type,
+            payload=approval.payload,
+            is_approved=approval.is_approved,
+            requester=approval.requester,
+            request_date=approval.request_date,
+            attachment_url=approval.attachment_url,
+        )
 

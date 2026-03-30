@@ -94,6 +94,7 @@ class JobPreviewResponse(BaseModel):
 
 
 class ApprovalPreviewDataResponse(BaseModel):
+    id: int
     type: str
     payload: str
     is_approved: bool

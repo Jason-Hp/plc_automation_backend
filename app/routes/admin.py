@@ -24,6 +24,7 @@ from app.models.db.data_models import (
 )
 from app.models.api.response_models import (
     ApiResponse,
+    ApprovalPreviewDataResponse,
     ApprovalPreviewListResponse,
     BatchProductUploadResultResponse,
     QuotePreviewListResponse,
@@ -631,22 +632,22 @@ async def delete_approval(
         approval_id=approval_id, deleter_email=email
     )
 
-@router.put("/approvals/{approval_id}/approve", response_model=ApiResponse)
+@router.put("/approvals/{approval_id}/approve", response_model=ApprovalPreviewDataResponse)
 async def approve_approval(
     approval_id: int,
     token_data: dict = Depends(verify_token)
-) -> ApiResponse:
+) -> ApprovalPreviewDataResponse:
     is_admin(token_data)
     email = token_data.get("email")
     return admin_approvals_service.approve_approval(
         approval_id=approval_id, approver_email=email
     )
 
-@router.put("/approvals/{approval_id}/reject", response_model=ApiResponse)
+@router.put("/approvals/{approval_id}/reject", response_model=ApprovalPreviewDataResponse)
 async def reject_approval(
     approval_id: int,
     token_data: dict = Depends(verify_token)
-) -> ApiResponse:
+) -> ApprovalPreviewDataResponse:
     is_admin(token_data)
     email = token_data.get("email")
     return admin_approvals_service.reject_approval(
