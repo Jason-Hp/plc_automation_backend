@@ -45,8 +45,7 @@ class AdminApprovalsService:
             page=page,
             per_page=per_page,
         )
-
-        approvals_dto = [
+        approval_previews = [
             ApprovalPreviewDataResponse(
                 type=a.type,
                 payload=a.payload,
@@ -57,11 +56,12 @@ class AdminApprovalsService:
             )
             for a in approvals
         ]
+
         return ApprovalPreviewListResponse(
             page=page, 
             per_page=per_page, 
             total=total, 
-            approvals=approvals_dto
+            approval_previews=approval_previews
         )
 
     async def add_approval(
@@ -73,10 +73,14 @@ class AdminApprovalsService:
         timezone: datetime.tzinfo,
     ) -> ApiResponse:
         approval_db = ApprovalDb.model_validate(approval.model_dump())
-        approval_db.requester = requester_email
-        approval_db.request_date = datetime.datetime.now(timezone).strftime(
-            "%Y-%m-%d"
-        )
+
+        if approval_db.requester is None:
+            approval_db.requester = requester_email
+
+        if approval_db.request_date is None:
+            approval_db.request_date = datetime.datetime.now(timezone).strftime(
+                "%Y-%m-%d"
+            )
 
         if attachment:
             attachment_url = self._storage_service.save_upload_public(

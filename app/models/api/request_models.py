@@ -15,6 +15,8 @@ class EnquiryRequest(BaseModel):
 
 
 class QuoteWithProductPreviewsWithQuantityRequest(EnquiryRequest):
+    is_paid: Optional[bool] = False
+    total_amount: Optional[int] = 0
     product_previews_with_quantity: list[ProductPreviewWithQuantityRequest] = Field(
         ..., min_items=1
     )
@@ -112,20 +114,13 @@ class ContactInfoRequest(BaseModel):
     country: str
 
 
-class BlogUploadRequest(BaseModel):
+class BlogWithCategoriesRequest(BaseModel):
     id: Optional[int] = None
     title: str
-    image_url: str
+    image_url: Optional[str] = None
     published_by: str
 
-    # DD - MM - YYYY
-    created_at: str
-    updated_at: str
-
     content: str
-
-
-class BlogWithCategoriesRequest(BlogUploadRequest):
     categories: list[CategoryRequest]
 
 

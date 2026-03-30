@@ -40,6 +40,7 @@ class StorageService:
                 Params={'Bucket': bucket, 'Key': key},
                 ExpiresIn=900  # 15 minutes expiration
             )
+            print(f"Generated presigned URL for bucket '{bucket}' and key '{key}': {presigned_url}")
             return presigned_url
         except Exception as exc:
             raise exc

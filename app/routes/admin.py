@@ -286,11 +286,14 @@ async def upload_blog(
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     is_admin(token_data)
+
+    # This may need to be moved in service layer instead
     db_blog = BlogDb.model_validate(request.model_dump(exclude={"categories"}))
     db_categories = [
         CategoryDb.model_validate(category.model_dump())
         for category in request.categories
     ]
+
     admin_blog_service.upload_blog(db_blog, db_categories)
     return ApiResponse(message="Blog uploaded successfully.")
 
@@ -571,6 +574,7 @@ async def get_admin_logs(log_type: str,
     else:
         try:
             key = f"{log_enum.prefix}_{date}.log"
+            print(f"Attempting to fetch log from S3 with key: {key}")
             log_content_url = storage_service.get_object_url(settings.aws_s3_log_bucket, key)
 
             # Force download by adding response-content-disposition parameter

@@ -362,11 +362,6 @@ Same schema as POST `/admin/products`.
 
 ### DELETE `/admin/products/{product_id}`
 
-### POST `/admin/products/batch`
-**Content-Type**: `multipart/form-data`
-**Request body**
-- `csv_file`: (required file)
-
 ### POST `/admin/faqs`
 **Request body**
 ```json
@@ -464,7 +459,6 @@ Same schema as POST `/admin/contact-info`.
   "phone": "12345678",
   "email": "john@example.com",
   "message": "Quote request message",
-  "is_paid": false,
   "total_amount": 1000,
   "product_previews_with_quantity": [
     {
@@ -491,8 +485,6 @@ Same schema as POST `/admin/quotes`.
   "title": "New Blog Post",
   "image_url": "https://example.com/blog.jpg",
   "published_by": "Admin",
-  "created_at": "01-03-2025",
-  "updated_at": "01-03-2025",
   "content": "This is the full content of the blog post in HTML or Markdown.",
   "categories": [{ "id": 1, "name": "Guide" }]
 }

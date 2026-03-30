@@ -2,6 +2,10 @@ from __future__ import annotations
 
 from typing import Optional
 
+from datetime import datetime
+import pytz
+
+from app.config import settings
 from app.models.db.data_models import Blog
 from app.utils.supabase_client_util import get_supabase_client
 
@@ -89,16 +93,19 @@ class BlogRepository:
         return Blog.model_validate(rows[0])
 
     def add_blog(self, blog: Blog) -> Blog:
-        row = blog.model_dump()
+        blog.created_at = blog.updated_at = datetime.now(pytz.timezone(settings.timezone)).strftime("%Y-%m-%d")
+
+        row = blog.model_dump(exclude={"id"})
         insert_resp = self._client.table("blogs").insert(row).execute()
-        # Supabase may return inserted rows; best-effort assignment.
+
         inserted = (insert_resp.data or [])[:1]
         if inserted and inserted[0].get("id") is not None:
             blog.id = inserted[0]["id"]
         return blog
 
     def update_blog(self, blog_id: int, blog: Blog) -> None:
-        row = blog.model_dump(exclude={"id"})
+        blog.updated_at = datetime.now(pytz.timezone(settings.timezone)).strftime("%Y-%m-%d")
+        row = blog.model_dump(exclude={"id", "created_at"})
         self._client.table("blogs").update(row).eq("id", blog_id).execute()
 
     def delete_blog(self, blog_id: int) -> None:
