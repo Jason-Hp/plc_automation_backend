@@ -35,7 +35,7 @@ class SearchService:
             'match_embeddings',
             {
                 'query_embedding': query_embedding,
-                'match_threshold': 0.79,
+                'match_threshold': 0.5,
                 'match_count': top_k
             }
         ).execute()
@@ -52,10 +52,11 @@ class SearchService:
 
         product_previews = []
         for result in results:
-            manufacturer = Manufacturer(
-                id=result.get("manufacturer_id"),
-                name=result.get("manufacturer_name", "Unknown")
-            )
+            manufacturer = {
+                'id': result.get("manufacturer_id"),
+                'name': result.get("manufacturer_name", "Unknown")
+            }
+
             product = ProductPreview(
                 id=result.get("id"),
                 name=result.get("name"),
