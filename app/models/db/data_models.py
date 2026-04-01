@@ -44,7 +44,7 @@ class ContactInfo(BaseModel):
     address: str
     phone: str
     email: str = Field(..., min_length=3)
-    working_hours: str
+    working_hours: Optional[str] = None
     country: str
 
 
@@ -73,7 +73,7 @@ class Job(BaseModel):
     requirements: str
     responsibilities: str
     description: str
-    working_hours: str
+    working_hours: Optional[str] = None
 
 
 class Approval(BaseModel):

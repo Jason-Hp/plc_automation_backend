@@ -37,7 +37,7 @@ class ContactInfoResponse(BaseModel):
     address: str
     phone: str
     email: str
-    working_hours: str
+    working_hours: Optional[str] = None
     country: str
 
 
@@ -156,7 +156,7 @@ class JobResponse(BaseModel):
     requirements: str
     responsibilities: str
     description: str
-    working_hours: str
+    working_hours: Optional[str] = None
 
 
 class ApiResponse(BaseModel):
