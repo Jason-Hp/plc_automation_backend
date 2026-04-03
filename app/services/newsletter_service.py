@@ -13,7 +13,7 @@ from app.services.email_service import EmailService
 from app.services.log_service import LogService
 
 
-class AdminNewsletterService:
+class NewsletterService:
     def __init__(
         self,
         *,

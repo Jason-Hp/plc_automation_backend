@@ -17,7 +17,7 @@ from app.services.log_service import LogService
 from app.services.storage_service import StorageService
 
 
-class AdminApprovalsService:
+class ApprovalsService:
     def __init__(
         self,
         *,

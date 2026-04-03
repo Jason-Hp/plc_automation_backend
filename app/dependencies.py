@@ -20,8 +20,8 @@ from app.services.info_service import InfoService
 from app.services.blog_service import BlogService
 from app.services.job_service import JobService
 from app.services.product_service import ProductService
-from app.services.admin_newsletter_service import AdminNewsletterService
-from app.services.admin_approvals_service import AdminApprovalsService
+from app.services.newsletter_service import NewsletterService
+from app.services.approvals_service import ApprovalsService
 from app.services.storage_service import StorageService
 from app.services.supabase_service import SupabaseService
 from app.services.forms_service import FormsService
@@ -70,12 +70,12 @@ product_service = ProductService(
     country_repo=country_repo,
 )
 
-admin_newsletter_service = AdminNewsletterService(
+admin_newsletter_service = NewsletterService(
     newsletter_repo=newsletter_repo,
     email_service=email_service,
 )
 
-admin_approvals_service = AdminApprovalsService(
+admin_approvals_service = ApprovalsService(
     approval_repo=approval_repo, storage_service=storage_service
 )
 
