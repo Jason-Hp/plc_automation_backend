@@ -16,20 +16,15 @@ from app.services.email_service import EmailService
 from app.services.jwt_service import JwtService
 from app.services.search_service import SearchService
 from app.services.quotes_service import QuotesService
-from app.services.admin_faq_service import AdminFaqService
-from app.services.admin_blog_service import AdminBlogService
-from app.services.admin_job_service import AdminJobService
-from app.services.admin_catalog_service import AdminCatalogService
-from app.services.admin_products_service import AdminProductsService
+from app.services.info_service import InfoService
+from app.services.blog_service import BlogService
+from app.services.job_service import JobService
+from app.services.product_service import ProductService
 from app.services.admin_newsletter_service import AdminNewsletterService
 from app.services.admin_approvals_service import AdminApprovalsService
 from app.services.storage_service import StorageService
 from app.services.supabase_service import SupabaseService
 from app.services.forms_service import FormsService
-from app.services.public_infos_service import PublicInfosService
-from app.services.public_products_service import PublicProductsService
-from app.services.public_blogs_service import PublicBlogsService
-from app.services.public_jobs_service import PublicJobsService
 
 newsletter_repo = NewsletterRepository()
 approval_repo = ApprovalRepository()
@@ -54,25 +49,25 @@ supabase_service = SupabaseService()
 
 quotes_service = QuotesService(quote_repo=quote_repo, quote_product_repo=quote_product_repo)
 
-admin_faq_service = AdminFaqService(faq_repo=faq_repo)
-
-admin_blog_service = AdminBlogService(
-    blog_repo=blog_repo, category_repo=category_repo, blog_category_repo=blog_category_repo
-)
-
-admin_job_service = AdminJobService(job_repo=job_repo)
-
-admin_catalog_service = AdminCatalogService(
+info_service = InfoService(
+    faq_repo=faq_repo,
+    contact_info_repo=contact_info_repo,
     category_repo=category_repo,
     manufacturer_repo=manufacturer_repo,
     country_repo=country_repo,
-    contact_info_repo=contact_info_repo,
 )
 
-admin_products_service = AdminProductsService(
+blog_service = BlogService(
+    blog_repo=blog_repo, category_repo=category_repo, blog_category_repo=blog_category_repo
+)
+
+job_service = JobService(job_repo=job_repo, email_service=email_service)
+
+product_service = ProductService(
     manufacturer_repo=manufacturer_repo,
     product_repo=product_repo,
     product_country_repo=product_country_repo,
+    country_repo=country_repo,
 )
 
 admin_newsletter_service = AdminNewsletterService(
@@ -88,27 +83,4 @@ forms_service = FormsService(
     email_service=email_service,
     newsletter_repo=newsletter_repo,
     quotes_service=quotes_service,
-)
-
-public_infos_service = PublicInfosService(
-    faq_repo=faq_repo,
-    contact_info_repo=contact_info_repo,
-    category_repo=category_repo,
-    manufacturer_repo=manufacturer_repo,
-    country_repo=country_repo,
-)
-
-public_products_service = PublicProductsService(
-    product_repo=product_repo,
-    country_repo=country_repo,
-    product_country_repo=product_country_repo,
-)
-
-public_blogs_service = PublicBlogsService(
-    blog_repo=blog_repo, blog_category_repo=blog_category_repo
-)
-
-public_jobs_service = PublicJobsService(
-    job_repo=job_repo,
-    email_service=email_service,
 )

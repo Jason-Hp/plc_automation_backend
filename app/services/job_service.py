@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+from typing import List
 from fastapi import HTTPException, UploadFile
 
 from app.config import settings
+from app.models.db.data_models import Job
 from app.models.api.request_models import JobApplicationRequest
 from app.models.api.response_models import ApiResponse, JobPreviewResponse, JobResponse, JobPreviewListResponse
 from app.repositories.job_repository import JobRepository
@@ -11,7 +13,7 @@ from app.utils.formatter_util import format_form
 from app.utils.translation_util import translate_text
 
 
-class PublicJobsService:
+class JobService:
     def __init__(
         self,
         *,
@@ -25,6 +27,8 @@ class PublicJobsService:
         if not value.isdigit():
             error_message = translate_text(f"{field_name} must contain only digits")
             raise HTTPException(status_code=400, detail=error_message)
+
+    # --- Public Methods ---
 
     def list_job_postings(self, page: int = 1, per_page: int = 10) -> JobPreviewListResponse:
         jobs = self._job_repo.get_all_jobs()
@@ -95,3 +99,14 @@ class PublicJobsService:
             message=translate_text("Application submitted successfully.")
         )
 
+    # --- Admin Methods ---
+
+    def upload_job(self, job: Job) -> None:
+        self._job_repo.add_job(job)
+
+    def update_job(self, job_id: int, job: Job) -> None:
+        job.id = job_id
+        self._job_repo.update_job(job_id, job)
+
+    def delete_job(self, job_id: int) -> None:
+        self._job_repo.delete_job(job_id)

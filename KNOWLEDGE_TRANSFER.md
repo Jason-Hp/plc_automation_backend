@@ -125,7 +125,7 @@ gunicorn -w 4 -k uvicorn.workers.UvicornWorker app.main:app
 ### **Request Flow**
 1.  **Middleware**: [ContextMiddleware](file:///c%3A/Users/pollo/Desktop/plc_automation_backend/app/middlewares/context_middleware.py) extracts headers like `lang` and `country` and stores them in a context variable.
 2.  **Routes**: [routes/](file:///c%3A/Users/pollo/Desktop/plc_automation_backend/app/routes/) handles incoming requests and validates input models.
-3.  **Services**: [services/](file:///c%3A/Users/pollo/Desktop/plc_automation_backend/app/services/) contains business logic (e.g., calculating totals, sending emails).
+3.  **Services**: [services/](file:///c%3A/Users/pollo/Desktop/plc_automation_backend/app/services/) contains unified business logic for both public and administrative operations.
 4.  **Repositories**: [repositories/](file:///c%3A/Users/pollo/Desktop/plc_automation_backend/app/repositories/) interacts with Supabase using the [supabase-py](https://github.com/supabase-community/supabase-py) client.
 
 ### **Authentication & Authorization**
