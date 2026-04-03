@@ -52,13 +52,12 @@ from app.models.api.request_models import (
 from app.config import settings
 from app.services.log_service import LogService
 from app.dependencies import (
-    admin_blog_service,
-    admin_catalog_service,
-    admin_products_service,
+    blog_service,
+    info_service,
+    product_service,
     admin_newsletter_service,
     admin_approvals_service,
-    admin_faq_service,
-    admin_job_service,
+    job_service,
     jwt_service,
     quotes_service,
     storage_service,
@@ -185,7 +184,7 @@ async def upload_product(
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     is_admin(token_data)
-    return admin_products_service.add_product(request=request)
+    return product_service.add_product(request=request)
 
 @router.put("/products/{product_id}", response_model=ApiResponse)
 async def update_product(
@@ -194,7 +193,7 @@ async def update_product(
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     is_admin(token_data)
-    return admin_products_service.update_product(
+    return product_service.update_product(
         product_id=product_id, request=request
     )
 
@@ -205,7 +204,7 @@ async def delete_product(
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     is_admin(token_data)
-    return admin_products_service.delete_product(product_id=product_id)
+    return product_service.delete_product(product_id=product_id)
 
 @router.post("/broadcast-newsletter", response_model=ApiResponse)
 async def broadcast_newsletter(
@@ -229,7 +228,7 @@ async def upload_faqs(
 ) -> ApiResponse:
     is_admin(token_data)
     db_faqs = [FAQDb.model_validate(f.model_dump()) for f in faqs]
-    admin_faq_service.upload_faqs(db_faqs)
+    info_service.upload_faqs(db_faqs)
     return ApiResponse(message="FAQs uploaded successfully.")
 
 @router.put("/faqs/{faq_id}", response_model=ApiResponse)
@@ -239,7 +238,7 @@ async def update_faq(
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     is_admin(token_data)
-    admin_faq_service.update_faq(faq_id, question=faq.question, answer=faq.answer)
+    info_service.update_faq(faq_id, question=faq.question, answer=faq.answer)
     return ApiResponse(message="FAQ updated successfully.")
 
 @router.delete("/faqs/{faq_id}", response_model=ApiResponse)
@@ -248,7 +247,7 @@ async def delete_faq(
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     is_admin(token_data)
-    admin_faq_service.delete_faq(faq_id)
+    info_service.delete_faq(faq_id)
     return ApiResponse(message="FAQ deleted successfully.")
 
 @router.post("/contact-info", response_model=ApiResponse)
@@ -257,7 +256,7 @@ async def upload_contact_info(
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     is_admin(token_data)
-    admin_catalog_service.add_contact_info(ContactInfoDb.model_validate(contact_info.model_dump()))
+    info_service.add_contact_info(ContactInfoDb.model_validate(contact_info.model_dump()))
     return ApiResponse(message="Contact info uploaded successfully.")
 
 @router.put("/contact-info/{contact_id}", response_model=ApiResponse)
@@ -267,7 +266,7 @@ async def update_contact_info(
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     is_admin(token_data)
-    admin_catalog_service.update_contact_info(
+    info_service.update_contact_info(
         contact_id=contact_id, contact_info=ContactInfoDb.model_validate(contact_info.model_dump())
     )
     return ApiResponse(message="Contact info updated successfully.")
@@ -278,7 +277,7 @@ async def delete_contact_info(
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     is_admin(token_data)
-    admin_catalog_service.delete_contact_info(contact_id)
+    info_service.delete_contact_info(contact_id)
     return ApiResponse(message="Contact info deleted successfully.")
 
 @router.post("/blogs", response_model=ApiResponse)
@@ -295,7 +294,7 @@ async def upload_blog(
         for category in request.categories
     ]
 
-    admin_blog_service.upload_blog(db_blog, db_categories)
+    blog_service.upload_blog(db_blog, db_categories)
     return ApiResponse(message="Blog uploaded successfully.")
 
 @router.put("/blogs/{blog_id}", response_model=ApiResponse)
@@ -310,7 +309,7 @@ async def update_blog(
         CategoryDb.model_validate(category.model_dump())
         for category in request.categories
     ]
-    admin_blog_service.update_blog(blog_id, db_blog, db_categories)
+    blog_service.update_blog(blog_id, db_blog, db_categories)
     return ApiResponse(message="Blog updated successfully.")
 
 @router.delete("/blogs/{blog_id}", response_model=ApiResponse)
@@ -319,7 +318,7 @@ async def delete_blog(
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     is_admin(token_data)
-    admin_blog_service.delete_blog(blog_id)
+    blog_service.delete_blog(blog_id)
     return ApiResponse(message="Blog deleted successfully.")
 
 @router.post("/jobs", response_model=ApiResponse)
@@ -328,7 +327,7 @@ async def upload_job(
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     is_admin(token_data)
-    admin_job_service.upload_job(JobDb.model_validate(job.model_dump()))
+    job_service.upload_job(JobDb.model_validate(job.model_dump()))
     return ApiResponse(message="Job uploaded successfully.")
 
 @router.put("/jobs/{job_id}", response_model=ApiResponse)
@@ -338,7 +337,7 @@ async def update_job(
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     is_admin(token_data)
-    admin_job_service.update_job(
+    job_service.update_job(
         job_id=job_id, job=JobDb.model_validate(job.model_dump())
     )
     return ApiResponse(message="Job updated successfully.")
@@ -349,7 +348,7 @@ async def delete_job(
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     is_admin(token_data)
-    admin_job_service.delete_job(job_id)
+    job_service.delete_job(job_id)
     return ApiResponse(message="Job deleted successfully.")
 
 @router.post("/categories", response_model=ApiResponse)
@@ -358,7 +357,7 @@ async def upload_category(
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     is_admin(token_data)
-    admin_catalog_service.add_category(CategoryDb.model_validate(category.model_dump()))
+    info_service.add_category(CategoryDb.model_validate(category.model_dump()))
     return ApiResponse(message="Category uploaded successfully.")
 
 @router.put("/categories/{category_id}", response_model=ApiResponse)
@@ -368,7 +367,7 @@ async def update_category(
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     is_admin(token_data)
-    admin_catalog_service.update_category(
+    info_service.update_category(
         category_id=category_id, category=CategoryDb.model_validate(category.model_dump())
     )
     return ApiResponse(message="Category updated successfully.")
@@ -379,7 +378,7 @@ async def delete_category(
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     is_admin(token_data)
-    admin_catalog_service.delete_category(category_id)
+    info_service.delete_category(category_id)
     return ApiResponse(message="Category deleted successfully.")
 
 @router.post("/manufacturers", response_model=ApiResponse)
@@ -388,7 +387,7 @@ async def upload_manufacturer(
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     is_admin(token_data)
-    admin_catalog_service.add_manufacturer(
+    info_service.add_manufacturer(
         ManufacturerDb.model_validate(manufacturer.model_dump())
     )
     return ApiResponse(message="Manufacturer uploaded successfully.")
@@ -400,7 +399,7 @@ async def update_manufacturer(
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     is_admin(token_data)
-    admin_catalog_service.update_manufacturer(
+    info_service.update_manufacturer(
         manufacturer_id=manufacturer_id,
         manufacturer=ManufacturerDb.model_validate(manufacturer.model_dump()),
     )
@@ -412,7 +411,7 @@ async def delete_manufacturer(
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     is_admin(token_data)
-    admin_catalog_service.delete_manufacturer(manufacturer_id)
+    info_service.delete_manufacturer(manufacturer_id)
     return ApiResponse(message="Manufacturer deleted successfully.")
 
 @router.post("/countries", response_model=ApiResponse)
@@ -421,7 +420,7 @@ async def upload_country(
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     is_admin(token_data)
-    admin_catalog_service.add_country(
+    info_service.add_country(
         CountryDb.model_validate(country.model_dump())
     )
     return ApiResponse(message="Country uploaded successfully.")
@@ -433,7 +432,7 @@ async def update_country(
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     is_admin(token_data)
-    admin_catalog_service.update_country(
+    info_service.update_country(
         country_id=country_id,
         country=CountryDb.model_validate(country.model_dump()),
     )
@@ -445,7 +444,7 @@ async def delete_country(
     token_data: dict = Depends(verify_token)
 ) -> ApiResponse:
     is_admin(token_data)
-    admin_catalog_service.delete_country(country_id)
+    info_service.delete_country(country_id)
     return ApiResponse(message="Country deleted successfully.")
 
 

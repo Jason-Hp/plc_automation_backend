@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from typing import List
-
 from fastapi import HTTPException
 
+from app.models.db.data_models import FAQ, Category, ContactInfo, Country, Manufacturer
 from app.models.api.response_models import (
     CategoryResponse,
     ContactInfoResponse,
@@ -19,7 +19,7 @@ from app.repositories.maufacturer_repository import ManufacturerRepository
 from app.utils.translation_util import translate_text
 
 
-class PublicInfosService:
+class InfoService:
     def __init__(
         self,
         *,
@@ -34,6 +34,8 @@ class PublicInfosService:
         self._category_repo = category_repo
         self._manufacturer_repo = manufacturer_repo
         self._country_repo = country_repo
+
+    # --- Public Methods ---
 
     def get_faqs(self) -> List[FAQResponse]:
         faqs = self._faq_repo.get_all_faqs()
@@ -78,3 +80,56 @@ class PublicInfosService:
             for c in self._country_repo.get_all_countries()
         ]
 
+    # --- Admin Methods (FAQ) ---
+
+    def upload_faqs(self, faqs: List[FAQ]) -> None:
+        for faq in faqs:
+            self._faq_repo.add_faq(faq.question, faq.answer)
+
+    def update_faq(self, faq_id: int, *, question: str, answer: str) -> None:
+        self._faq_repo.update_faq(faq_id, question, answer)
+
+    def delete_faq(self, faq_id: int) -> None:
+        self._faq_repo.delete_faq(faq_id)
+
+    # --- Admin Methods (Catalog: Categories, Manufacturers, Countries, Contact Info) ---
+
+    def add_category(self, category: Category) -> None:
+        self._category_repo.add_category(category)
+
+    def update_category(self, category_id: int, category: Category) -> None:
+        category.id = category_id
+        self._category_repo.update_category(category_id, category)
+
+    def delete_category(self, category_id: int) -> None:
+        self._category_repo.delete_category(category_id)
+
+    def add_manufacturer(self, manufacturer: Manufacturer) -> None:
+        self._manufacturer_repo.add_manufacturer(manufacturer)
+
+    def update_manufacturer(self, manufacturer_id: int, manufacturer: Manufacturer) -> None:
+        manufacturer.id = manufacturer_id
+        self._manufacturer_repo.update_manufacturer(manufacturer_id, manufacturer)
+
+    def delete_manufacturer(self, manufacturer_id: int) -> None:
+        self._manufacturer_repo.delete_manufacturer(manufacturer_id)
+
+    def add_country(self, country: Country) -> None:
+        self._country_repo.add_country(country)
+
+    def update_country(self, country_id: int, country: Country) -> None:
+        country.id = country_id
+        self._country_repo.update_country(country_id, country)
+
+    def delete_country(self, country_id: int) -> None:
+        self._country_repo.delete_country(country_id)
+
+    def add_contact_info(self, contact_info: ContactInfo) -> None:
+        self._contact_info_repo.add_contact_info(contact_info)
+
+    def update_contact_info(self, contact_id: int, contact_info: ContactInfo) -> None:
+        contact_info.id = contact_id
+        self._contact_info_repo.update_contact_info(contact_id, contact_info)
+
+    def delete_contact_info(self, contact_id: int) -> None:
+        self._contact_info_repo.delete_contact_info(contact_id)

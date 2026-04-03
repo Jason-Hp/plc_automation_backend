@@ -9,29 +9,29 @@ from app.models.api.response_models import (
     FAQResponse,
     ManufacturerResponse,
 )
-from app.dependencies import public_infos_service
+from app.dependencies import info_service
 
 router = APIRouter(tags=["info"])
 @router.get("/faqs")
 async def get_faqs() -> list[FAQResponse]:
-    return public_infos_service.get_faqs()
+    return info_service.get_faqs()
 
 @router.get("/contact-info")
 async def get_contact_info() -> list[ContactInfoResponse]:
-    return public_infos_service.get_contact_infos()
+    return info_service.get_contact_infos()
 
 @router.get("/contact-info/{country}")
 async def get_contact_info_by_country(country: str) -> ContactInfoResponse:
-    return public_infos_service.get_contact_info_by_country(country)
+    return info_service.get_contact_info_by_country(country)
 
 @router.get("/categories")
 async def get_categories() -> list[CategoryResponse]:
-    return public_infos_service.get_categories()
+    return info_service.get_categories()
 
 @router.get("/manufacturers")
 async def get_manufacturers() -> list[ManufacturerResponse]:
-    return public_infos_service.get_manufacturers()
+    return info_service.get_manufacturers()
 
 @router.get("/countries")
 async def get_countries() -> list[CountryResponse]:
-    return public_infos_service.get_countries()
+    return info_service.get_countries()

@@ -1,0 +1,4 @@
+[INFO] [2026-04-03 13:27:58]: {"event": "HTTP_REQUEST", "method": "GET", "path": "/api/products", "client": "127.0.0.1"}
+[INFO] [2026-04-03 13:28:02]: {"event": "HTTP_RESPONSE", "method": "GET", "path": "/api/products", "status_code": 200, "duration_ms": 4327.77}
+[INFO] [2026-04-03 13:28:09]: {"event": "HTTP_REQUEST", "method": "GET", "path": "/api/jobs/", "client": "127.0.0.1"}
+[INFO] [2026-04-03 13:28:09]: {"event": "HTTP_RESPONSE", "method": "GET", "path": "/api/jobs/", "status_code": 200, "duration_ms": 268.47}
